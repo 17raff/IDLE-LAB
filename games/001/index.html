@@ -4,59 +4,78 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#171513">
+<meta name="description" content="枝豆をつまんで、遠くのお茶碗を狙う3Dミニゲーム。">
 <title>枝豆飛ばし | IDLE-LAB</title>
 <style>
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;overflow:hidden;background:#171513;font-family:system-ui,sans-serif;color:#f4f0e7}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#171513;color:#f5f1e9;font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif}
 canvas{display:block;touch-action:none}
-#app{position:fixed;inset:0}
-#ui{pointer-events:none;position:fixed;inset:0}
-header{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;padding:calc(env(safe-area-inset-top) + 19px) 21px;background:linear-gradient(#16130fc9,transparent);font-size:12px;letter-spacing:2px;font-weight:800}
-.muted{opacity:.6}
-#count{font-size:19px;letter-spacing:5px;color:#c6f36b}
-#scoreline{position:absolute;bottom:calc(env(safe-area-inset-bottom) + 25px);width:100%;text-align:center;font-size:13px;letter-spacing:2px;text-shadow:0 2px 8px #000}
-#screen{position:fixed;inset:0;background:#131411dd;display:grid;place-items:center;padding:22px;z-index:3}
-.panel{width:min(390px,100%);background:#22231e;border:1px solid #5b634b;border-radius:22px;padding:30px;text-align:center;box-shadow:0 25px 80px #0008}
-.panel h1{font-size:43px;margin:10px 0}
-.panel p{font-size:13px;line-height:1.9;color:#c3c7b9}
-.panel button{width:100%;padding:15px;margin-top:20px;border:0;border-radius:10px;background:#c6f36b;color:#18200e;font-weight:900;font-size:16px;cursor:pointer}
-.panel button.alt{background:transparent;color:#f4f0e7;border:1px solid #72776b;margin-top:9px}
+#app,#ui{position:fixed;inset:0}
+#ui{pointer-events:none}
+header{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;padding:calc(env(safe-area-inset-top) + 17px) 20px 16px;background:linear-gradient(#15120edc,transparent);font-weight:850;letter-spacing:1.5px;font-size:12px}
+.sub{font-size:10px;opacity:.65;font-weight:600;letter-spacing:1px}
+.distance{text-align:right}
+.distance strong{display:block;font-size:25px;color:#c6f36b;letter-spacing:0}
+.beans{font-size:20px;letter-spacing:4px;color:#c6f36b;margin-top:5px}
+#bottom{position:absolute;bottom:calc(env(safe-area-inset-bottom) + 20px);left:0;right:0;text-align:center;font-size:14px;font-weight:800;text-shadow:0 2px 9px #000}
+#notice{position:absolute;top:40%;left:0;right:0;text-align:center;font-size:35px;font-weight:900;text-shadow:0 4px 15px #000;opacity:0;transition:opacity .2s}
+#notice.show{opacity:1}
+#screen{position:fixed;inset:0;z-index:5;background:#131411e9;display:grid;place-items:center;padding:22px}
+.panel{width:min(400px,100%);padding:30px 24px;background:#22231e;border:1px solid #555e4c;border-radius:22px;text-align:center;box-shadow:0 24px 80px #0009}
+.eyebrow{font-size:11px;color:#c6f36b;letter-spacing:3px;font-weight:850}
+.panel h1{font-size:clamp(32px,9vw,46px);margin:12px 0}
+.panel p{font-size:14px;color:#d4d5cb;line-height:1.85}
+.howto{margin:20px 0 6px;padding:15px;background:#141914;border-radius:12px;text-align:left;font-size:13px;line-height:2}
+.howto b{color:#c6f36b}
+.panel button{width:100%;padding:15px;margin-top:14px;border:0;border-radius:11px;background:#c6f36b;color:#1a2410;font-size:16px;font-weight:900;cursor:pointer}
+.panel button.secondary{background:transparent;color:#f5f1e9;border:1px solid #687260;margin-top:9px}
+#total{font-size:49px;color:#c6f36b;font-weight:900;margin:12px 0}
+#details{font-size:14px;line-height:2.2}
 .hidden{display:none!important}
-#resultNumber{font-size:45px;color:#c6f36b;font-weight:900}
-#results{line-height:2.2;font-size:14px}
-#notice{position:absolute;top:36%;width:100%;text-align:center;font-size:33px;font-weight:900;text-shadow:0 3px 15px #000;opacity:0;transition:opacity .25s}
-#notice.on{opacity:1}
-#load{position:fixed;inset:0;display:grid;place-items:center;background:#171513;z-index:9}
+#loading{position:fixed;inset:0;z-index:10;background:#171513;display:grid;place-items:center;font-size:16px;color:#c6f36b;font-weight:900}
 </style>
 </head>
 <body>
 <div id="app"></div>
 <div id="ui">
 <header>
-<div>IDLE-LAB <span class="muted">/ 001</span></div>
-<div id="count">● ● ●</div>
+<div>
+<div>IDLE-LAB / 001</div>
+<div class="beans" id="beans">● ● ●</div>
+</div>
+<div class="distance">
+<div class="sub">お茶碗まで</div>
+<strong id="distance">— cm</strong>
+</div>
 </header>
 <div id="notice"></div>
-<div id="scoreline"></div>
+<div id="bottom"></div>
 </div>
+
 <div id="screen">
 <div class="panel" id="intro">
-<div style="letter-spacing:4px;color:#c6f36b;font-size:12px">GAME 001</div>
-<h1>枝豆飛ばし</h1>
-<p>3粒の枝豆を、遠くの小さなお茶碗へ。<br>1本指で狙い、2本指でつまんで飛ばす。</p>
+<div class="eyebrow">GAME 001</div>
+<h1>🫛 枝豆飛ばし</h1>
+<p>3粒の枝豆を、小さなお茶碗へ。<br>止まった場所が近いほど好記録。</p>
+<div class="howto">
+<div><b>1本指でドラッグ</b>　上下左右に狙う</div>
+<div><b>2本指でつまむ</b>　豆を発射</div>
+<div><b>PC</b>　ドラッグで狙い、スペース長押し→離す</div>
+</div>
 <button id="start">START</button>
 </div>
-<div class="panel hidden" id="end">
-<div style="letter-spacing:4px;color:#c6f36b;font-size:12px">RESULT</div>
+<div class="panel hidden" id="result">
+<div class="eyebrow">RESULT</div>
 <h1>枝豆飛ばし</h1>
-<div id="resultNumber"></div>
-<div id="results"></div>
-<button id="again">RETRY</button>
-<button class="alt" id="share">𝕏 SHARE</button>
-<button class="alt" id="home">BACK TO IDLE-LAB</button>
+<div id="total"></div>
+<div id="details"></div>
+<button id="retry">RETRY</button>
+<button class="secondary" id="share">𝕏 SHARE</button>
+<button class="secondary" id="home">BACK TO IDLE-LAB</button>
 </div>
 </div>
-<div id="load">🫛</div>
+<div id="loading">🫛　準備中...</div>
 
 <script type="module">
 import * as THREE from 'https://esm.sh/three@0.180.0';
@@ -64,209 +83,250 @@ import * as CANNON from 'https://esm.sh/cannon-es@0.20.0';
 
 const $=id=>document.getElementById(id);
 const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x302b27);
-scene.fog=new THREE.Fog(0x302b27,7,19);
+scene.background=new THREE.Color(0x3a322c);
+scene.fog=new THREE.Fog(0x3a322c,5,16);
 
-const camera=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,.01,80);
-const renderer=new THREE.WebGLRenderer({antialias:true});
+const camera=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,.01,30);
+const renderer=new THREE.WebGLRenderer({
+ antialias:true,
+ powerPreference:'high-performance'
+});
 renderer.setSize(innerWidth,innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio,1.8));
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));
 renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 $('app').appendChild(renderer.domElement);
 
-scene.add(new THREE.HemisphereLight(0xffead2,0x48453b,2));
+scene.add(new THREE.HemisphereLight(0xffe8cc,0x5c5549,2));
 
-const light=new THREE.DirectionalLight(0xffe2b1,3);
-light.position.set(-2,5,2);
-light.castShadow=true;
-light.shadow.mapSize.set(1024,1024);
-light.shadow.camera.left=-7;
-light.shadow.camera.right=7;
-light.shadow.camera.top=7;
-light.shadow.camera.bottom=-7;
-scene.add(light);
+const sun=new THREE.DirectionalLight(0xffe2ae,2.8);
+sun.position.set(-1.5,4,2);
+sun.castShadow=true;
+sun.shadow.mapSize.set(1024,1024);
+sun.shadow.camera.left=-2;
+sun.shadow.camera.right=2;
+sun.shadow.camera.top=2;
+sun.shadow.camera.bottom=-2;
+scene.add(sun);
 
-const world=new CANNON.World({gravity:new CANNON.Vec3(0,-9.82,0)});
-world.allowSleep=true;
-world.solver.iterations=14;
-world.broadphase=new CANNON.SAPBroadphase(world);
+const material=(color,roughness=.75,opts={})=>
+ new THREE.MeshStandardMaterial({color,roughness,...opts});
 
-const floorMat=new CANNON.Material('wood');
-const beanMat=new CANNON.Material('bean');
-const ceramic=new CANNON.Material('ceramic');
-
-world.addContactMaterial(new CANNON.ContactMaterial(floorMat,beanMat,{
- friction:.53,restitution:.34
-}));
-world.addContactMaterial(new CANNON.ContactMaterial(ceramic,beanMat,{
- friction:.34,restitution:.35
-}));
-
-const mat=(color,roughness=.7,extra={})=>
- new THREE.MeshStandardMaterial({color,roughness,...extra});
-
-const wood=mat(0x8a6548,.9);
-const seam=mat(0x487d32,.8);
-const podMat=mat(0x70a744,.72);
-const podLight=mat(0x8bc657,.68);
-const podDark=mat(0x507f34,.85);
-const beanGreen=mat(0xa5cb6a,.6);
-const cream=mat(0xe8e4d8,.35,{side:THREE.DoubleSide});
-const inner=mat(0xcbd5cf,.37,{side:THREE.DoubleSide});
+const wood=material(0x8b6448,.91);
+const darkWood=material(0x543e30);
+const podGreen=material(0x79aa48);
+const podLight=material(0x94c75c);
+const podDark=material(0x41692f);
+const seamMat=material(0x31532b);
+const beanGreen=material(0xa7c76c,.58);
+const ceramicOuter=material(0xe9e3d6,.37,{
+ side:THREE.DoubleSide
+});
+const ceramicInner=material(0xc9d8d3,.4,{
+ side:THREE.DoubleSide
+});
 
 // 木製床
-const floor=new THREE.Mesh(new THREE.PlaneGeometry(100,100),wood);
+const floor=new THREE.Mesh(
+ new THREE.PlaneGeometry(30,30),
+ wood
+);
 floor.rotation.x=-Math.PI/2;
 floor.receiveShadow=true;
 scene.add(floor);
 
-const groundBody=new CANNON.Body({
- mass:0,
- material:floorMat,
- shape:new CANNON.Plane()
-});
-groundBody.quaternion.setFromEuler(-Math.PI/2,0,0);
-world.addBody(groundBody);
-
-// 床板の継ぎ目と木目
-const boardLine=new THREE.MeshBasicMaterial({
- color:0x4b3527,transparent:true,opacity:.28
-});
-
-for(let i=-15;i<=15;i++){
+for(let i=-16;i<=16;i++){
  const m=new THREE.Mesh(
-  new THREE.BoxGeometry(.006,.001,24),boardLine
+  new THREE.BoxGeometry(.004,.001,12),
+  darkWood
  );
- m.position.set(i*.42,.001,-5);
+ m.position.set(i*.17,.001,-2);
  scene.add(m);
 }
 
-for(let i=0;i<90;i++){
+for(let i=0;i<75;i++){
  const m=new THREE.Mesh(
-  new THREE.BoxGeometry(.003,.001,.2+Math.random()*.8),
-  new THREE.MeshBasicMaterial({
-   color:0xb68b65,transparent:true,opacity:.07
+  new THREE.BoxGeometry(.001,.001,.04+Math.random()*.3),
+  material(0xb9906c,.9,{
+   transparent:true,
+   opacity:.16
   })
  );
- m.position.set((Math.random()-.5)*10,.002,-Math.random()*12);
+ m.position.set(
+  (Math.random()-.5)*4,
+  .002,
+  -Math.random()*5
+ );
  scene.add(m);
 }
 
-// 室内の壁
 const wall=new THREE.Mesh(
- new THREE.PlaneGeometry(24,10),
- mat(0x70675e,.95)
+ new THREE.PlaneGeometry(15,8),
+ material(0x70645b,.95)
 );
-wall.position.set(0,5,-8);
+wall.position.set(0,4,-4.8);
 scene.add(wall);
 
-const trim=new THREE.Mesh(
- new THREE.BoxGeometry(24,.11,.09),
- mat(0x443a32)
+// 物理エンジン
+const world=new CANNON.World({
+ gravity:new CANNON.Vec3(0,-9.82,0)
+});
+world.allowSleep=true;
+world.solver.iterations=14;
+world.broadphase=new CANNON.SAPBroadphase(world);
+
+const floorMaterial=new CANNON.Material('wood');
+const beanMaterial=new CANNON.Material('bean');
+const bowlMaterial=new CANNON.Material('bowl');
+
+world.addContactMaterial(
+ new CANNON.ContactMaterial(
+  floorMaterial,
+  beanMaterial,
+  {friction:.9,restitution:.12}
+ )
 );
-trim.position.set(0,.06,-7.95);
-scene.add(trim);
+world.addContactMaterial(
+ new CANNON.ContactMaterial(
+  bowlMaterial,
+  beanMaterial,
+  {friction:.7,restitution:.15}
+ )
+);
 
-// お茶碗
-let bowl=null;
+const floorBody=new CANNON.Body({
+ mass:0,
+ material:floorMaterial,
+ shape:new CANNON.Plane()
+});
+floorBody.quaternion.setFromEuler(-Math.PI/2,0,0);
+world.addBody(floorBody);
+
+// お茶碗：直径5cm、高さ約2.7cm
+const BOWL_R=.025;
+const BOWL_H=.027;
+const BEAN_R=.008;
+
+let targetDistance=.75;
+let bowlGroup=null;
 let bowlBodies=[];
-let distance=4;
 
-function radiusAt(y){
- return .018+.022*Math.pow(
-  Math.max(0,Math.min(1,y/.04)),.82
+function bowlRadius(y){
+ const t=Math.max(
+  0,
+  Math.min(1,y/BOWL_H)
  );
+ return .011+.014*Math.pow(t,.86);
 }
 
-function buildBowl(){
- if(bowl)scene.remove(bowl);
- bowlBodies.forEach(b=>world.removeBody(b));
+function createBowl(){
+ if(bowlGroup)scene.remove(bowlGroup);
+
+ for(const b of bowlBodies){
+  world.removeBody(b);
+ }
  bowlBodies=[];
 
- bowl=new THREE.Group();
- bowl.position.z=-distance;
- scene.add(bowl);
+ bowlGroup=new THREE.Group();
+ bowlGroup.position.z=-targetDistance;
+ scene.add(bowlGroup);
 
  const profile=[];
  for(let i=0;i<=24;i++){
-  const y=.04*i/24;
-  profile.push(new THREE.Vector2(radiusAt(y),y));
+  const y=BOWL_H*i/24;
+  profile.push(
+   new THREE.Vector2(bowlRadius(y),y)
+  );
  }
 
  const shell=new THREE.Mesh(
-  new THREE.LatheGeometry(profile,48),cream
+  new THREE.LatheGeometry(profile,48),
+  ceramicOuter
  );
  shell.castShadow=true;
  shell.receiveShadow=true;
- bowl.add(shell);
+ bowlGroup.add(shell);
 
  const inside=[];
  for(let i=0;i<=24;i++){
-  const y=.005+.035*i/24;
-  inside.push(new THREE.Vector2(
-   Math.max(.008,radiusAt(y)-.003),y
-  ));
+  const y=.004+(BOWL_H-.004)*i/24;
+  inside.push(
+   new THREE.Vector2(
+    Math.max(.004,bowlRadius(y)-.003),
+    y
+   )
+  );
  }
 
  const liner=new THREE.Mesh(
-  new THREE.LatheGeometry(inside,48),inner
+  new THREE.LatheGeometry(inside,48),
+  ceramicInner
  );
- bowl.add(liner);
+ liner.receiveShadow=true;
+ bowlGroup.add(liner);
 
  const rim=new THREE.Mesh(
-  new THREE.TorusGeometry(.039,.0024,8,48),cream
+  new THREE.TorusGeometry(.024,.0015,8,48),
+  ceramicOuter
  );
  rim.rotation.x=Math.PI/2;
- rim.position.y=.04;
- bowl.add(rim);
+ rim.position.y=BOWL_H;
+ bowlGroup.add(rim);
 
- const foot=new THREE.Mesh(
-  new THREE.CylinderGeometry(.019,.021,.004,32),cream
+ const base=new THREE.Mesh(
+  new THREE.CylinderGeometry(.012,.013,.003,32),
+  ceramicOuter
  );
- foot.position.y=.002;
- bowl.add(foot);
+ base.position.y=.0015;
+ bowlGroup.add(base);
 
- // お茶碗の壁を分割して衝突判定を作る
+ // お茶碗の壁の衝突判定
  for(let k=0;k<5;k++){
-  const y0=.04*k/5;
-  const y1=.04*(k+1)/5;
-  const rm=(radiusAt(y0)+radiusAt(y1))/2;
+  const y0=BOWL_H*k/5;
+  const y1=BOWL_H*(k+1)/5;
+  const rm=(bowlRadius(y0)+bowlRadius(y1))/2;
 
-  for(let j=0;j<32;j++){
-   const a=(j+.5)*Math.PI*2/32;
+  for(let j=0;j<40;j++){
+   const a=(j+.5)*Math.PI*2/40;
+   const halfTangential=
+    rm*Math.sin(Math.PI/40)+.0007;
 
-   const shape=new CANNON.Box(
-    new CANNON.Vec3(
-     .004,
-     (y1-y0)/2+.0004,
-     rm*Math.sin(Math.PI/32)+.001
+   const b=new CANNON.Body({
+    mass:0,
+    material:bowlMaterial
+   });
+
+   b.addShape(
+    new CANNON.Box(
+     new CANNON.Vec3(
+      .0018,
+      (y1-y0)/2+.0004,
+      halfTangential
+     )
     )
    );
 
-   const body=new CANNON.Body({
-    mass:0,material:ceramic
-   });
-   body.addShape(shape);
-   body.position.set(
+   b.position.set(
     rm*Math.cos(a),
     (y0+y1)/2,
-    -distance+rm*Math.sin(a)
+    -targetDistance+rm*Math.sin(a)
    );
-   body.quaternion.setFromEuler(0,-a,0);
-   world.addBody(body);
-   bowlBodies.push(body);
+   b.quaternion.setFromEuler(0,-a,0);
+
+   world.addBody(b);
+   bowlBodies.push(b);
   }
  }
 
  const bottom=new CANNON.Body({
-  mass:0,material:ceramic
+  mass:0,
+  material:bowlMaterial
  });
  bottom.addShape(
-  new CANNON.Cylinder(.018,.018,.006,24)
+  new CANNON.Cylinder(.012,.012,.004,24)
  );
- bottom.position.set(0,.004,-distance);
+ bottom.position.set(0,.003,-targetDistance);
  world.addBody(bottom);
  bowlBodies.push(bottom);
 }
@@ -275,44 +335,39 @@ function buildBowl(){
 const pod=new THREE.Group();
 scene.add(pod);
 
-const podVisual=new THREE.Group();
-pod.add(podVisual);
+const podModel=new THREE.Group();
+pod.add(podModel);
 
-let podBodyMesh;
-
-function createPodGeometry(){
- const rings=38;
- const sides=24;
- const verts=[];
- const uv=[];
+function podGeometry(){
+ const rings=64;
+ const sides=32;
+ const v=[];
  const idx=[];
 
  for(let i=0;i<=rings;i++){
   const t=i/rings;
-  const x=(t-.5)*.185;
-  const end=Math.pow(
-   Math.max(.025,Math.sin(Math.PI*t)),.65
+  const x=(t-.5)*.18;
+  const tip=Math.pow(
+   Math.max(.005,Math.sin(Math.PI*t)),
+   .68
   );
 
-  let bumps=0;
-  for(const c of [.25,.5,.75]){
-   bumps+=Math.exp(
-    -Math.pow((t-c)/.095,2)
-   )*.0065;
+  let swell=0;
+  for(const c of [.24,.5,.76]){
+   swell+=.0075*Math.exp(
+    -Math.pow((t-c)/.092,2)
+   );
   }
 
-  const r=(.009+bumps)*end;
+  const r=(.008+swell)*tip;
 
   for(let j=0;j<=sides;j++){
    const a=j/sides*Math.PI*2;
-   const ridge=1+.065*Math.cos(a*2);
-
-   verts.push(
+   v.push(
     x,
-    Math.sin(a)*r*1.18*ridge,
-    Math.cos(a)*r*.83
+    Math.sin(a)*r*1.2,
+    Math.cos(a)*r*.78
    );
-   uv.push(t,j/sides);
 
    if(i<rings&&j<sides){
     const n=i*(sides+1)+j;
@@ -327,86 +382,116 @@ function createPodGeometry(){
  const g=new THREE.BufferGeometry();
  g.setAttribute(
   'position',
-  new THREE.Float32BufferAttribute(verts,3)
- );
- g.setAttribute(
-  'uv',
-  new THREE.Float32BufferAttribute(uv,2)
+  new THREE.Float32BufferAttribute(v,3)
  );
  g.setIndex(idx);
  g.computeVertexNormals();
  return g;
 }
 
-podBodyMesh=new THREE.Mesh(
- createPodGeometry(),podMat
+const shell=new THREE.Mesh(
+ podGeometry(),
+ podGreen
 );
-podBodyMesh.castShadow=true;
-podVisual.add(podBodyMesh);
+shell.castShadow=true;
+podModel.add(shell);
 
-// さやの合わせ目
-for(const s of [-1,1]){
- const pts=[];
-
- for(let i=0;i<=44;i++){
-  const t=i/44;
-  const x=(t-.5)*.185;
-  const r=.009*Math.pow(
-   Math.max(.02,Math.sin(Math.PI*t)),.65
-  );
-  pts.push(new THREE.Vector3(
-   x,s*r*.22,-r*.87
-  ));
- }
-
- const curve=new THREE.CatmullRomCurve3(pts);
- const edge=new THREE.Mesh(
-  new THREE.TubeGeometry(curve,64,.0015,5,false),
-  s===1?podLight:podDark
- );
- podVisual.add(edge);
-}
-
-// 豆の膨らみ
 const bumps=[];
-
 for(let i=0;i<3;i++){
  const b=new THREE.Mesh(
-  new THREE.SphereGeometry(.018,24,16),
+  new THREE.SphereGeometry(.017,28,18),
   podLight
  );
- b.scale.set(1,.85,.55);
- b.position.set((i-1)*.045,0,-.004);
- podVisual.add(b);
+ b.scale.set(1,.84,.5);
+ b.position.set((i-1)*.045,0,-.006);
+ b.castShadow=true;
+ podModel.add(b);
  bumps.push(b);
 }
 
-// 茎
+// 裏側の合わせ目を強調
+for(const offset of [-.0035,0,.0035]){
+ const points=[];
+
+ for(let i=0;i<=70;i++){
+  const t=.025+.95*i/70;
+  const x=(t-.5)*.18;
+  const end=Math.pow(
+   Math.max(.005,Math.sin(Math.PI*t)),
+   .68
+  );
+  const z=-(
+   .008+.005*Math.sin(3*Math.PI*t)**2
+  )*end*.79;
+
+  points.push(
+   new THREE.Vector3(
+    x,
+    offset,
+    z-.001
+   )
+  );
+ }
+
+ const curve=new THREE.CatmullRomCurve3(points);
+ const line=new THREE.Mesh(
+  new THREE.TubeGeometry(
+   curve,
+   90,
+   offset===0?.0019:.00085,
+   6,
+   false
+  ),
+  offset===0?seamMat:podLight
+ );
+ podModel.add(line);
+}
+
+// 射出方向マーク
+const direction=new THREE.Group();
+pod.add(direction);
+
+const shaft=new THREE.Mesh(
+ new THREE.CylinderGeometry(.0012,.0012,.065,8),
+ podDark
+);
+shaft.rotation.x=Math.PI/2;
+shaft.position.z=-.05;
+direction.add(shaft);
+
+const tip=new THREE.Mesh(
+ new THREE.ConeGeometry(.004,.012,10),
+ podDark
+);
+tip.rotation.x=-Math.PI/2;
+tip.position.z=-.09;
+direction.add(tip);
+
 const stem=new THREE.Mesh(
- new THREE.CylinderGeometry(.002,.003,.02,8),
+ new THREE.CylinderGeometry(.002,.003,.018,8),
  podDark
 );
 stem.rotation.z=Math.PI/2;
-stem.position.x=-.097;
-podVisual.add(stem);
+stem.position.x=-.095;
+podModel.add(stem);
 
 // ゲーム状態
 let yaw=0;
-let pitch=33;
+let pitch=32;
 let round=0;
 let records=[];
 let mode='menu';
 let bean=null;
 let body=null;
-let shotStart=0;
+let shotAt=0;
 let still=0;
-let pinch=null;
 let charge=0;
+let pinch=null;
 
 const pointers=new Map();
 
 function updatePod(){
- pod.position.set(0,.18,.32);
+ pod.position.set(0,.13,.19);
  pod.rotation.order='YXZ';
  pod.rotation.y=yaw*Math.PI/180;
  pod.rotation.x=-pitch*Math.PI/180;
@@ -415,12 +500,14 @@ function updatePod(){
   b.visible=i>=round;
  });
 
- podBodyMesh.scale.y=1-charge*.28;
- podBodyMesh.scale.z=1-charge*.32;
+ shell.scale.y=1-charge*.23;
+ shell.scale.z=1-charge*.25;
 
  bumps.forEach(b=>{
-  b.scale.z=.55*(1-charge*.55);
+  b.scale.z=.5*(1-charge*.5);
  });
+
+ direction.visible=mode==='aim';
 }
 
 function resetShot(){
@@ -442,25 +529,33 @@ function resetShot(){
  pod.visible=true;
  updatePod();
 
- $('count').textContent=
-  '● '.repeat(3-round)+'○ '.repeat(round);
+ $('beans').textContent=
+  '● '.repeat(3-round)+
+  '○ '.repeat(round);
 
- $('scoreline').textContent=records.length
-  ?records.map(n=>`${n}cm`).join('  /  ')
+ $('bottom').textContent=
+  records.length
+  ?records.map(n=>n+' cm').join('  /  ')
   :'';
 
- camera.position.set(0,.42,1.12);
- camera.lookAt(0,.14,-1.1);
+ camera.position.set(0,.34,.68);
+ camera.lookAt(0,.13,-.36);
 }
 
 function start(){
- distance=(30+Math.floor(Math.random()*21))/10;
+ targetDistance=
+  (50+Math.floor(Math.random()*51))/100;
+
  round=0;
  records=[];
  yaw=0;
- pitch=33;
+ pitch=32;
 
- buildBowl();
+ createBowl();
+
+ $('distance').textContent=
+  Math.round(targetDistance*100)+' cm';
+
  $('screen').classList.add('hidden');
  resetShot();
 }
@@ -471,29 +566,30 @@ function launch(strength){
  mode='flight';
  pod.visible=false;
 
- const speed=3.6+
-  Math.max(.06,Math.min(1,strength))*7.6;
+ const speed=
+  1.25+
+  Math.max(.08,Math.min(1,strength))*2.1;
 
  bean=new THREE.Mesh(
-  new THREE.SphereGeometry(.008,24,16),
+  new THREE.SphereGeometry(BEAN_R,24,16),
   beanGreen
  );
- bean.scale.set(1.12,.9,.94);
+ bean.scale.set(1.1,.9,.95);
  bean.castShadow=true;
  scene.add(bean);
 
  body=new CANNON.Body({
   mass:.0012,
-  material:beanMat,
-  shape:new CANNON.Sphere(.008),
-  linearDamping:.045,
-  angularDamping:.32,
+  material:beanMaterial,
+  shape:new CANNON.Sphere(BEAN_R),
+  linearDamping:.65,
+  angularDamping:.97,
   allowSleep:true,
-  sleepSpeedLimit:.04,
-  sleepTimeLimit:.65
+  sleepSpeedLimit:.06,
+  sleepTimeLimit:.5
  });
 
- body.position.set(0,.18,.2);
+ body.position.set(0,.13,.10);
 
  const y=yaw*Math.PI/180;
  const p=pitch*Math.PI/180;
@@ -504,85 +600,91 @@ function launch(strength){
   -Math.cos(y)*Math.cos(p)*speed
  );
 
- body.angularVelocity.set(5,8,3);
+ body.angularVelocity.set(1.5,2,1);
  world.addBody(body);
 
- shotStart=performance.now();
+ shotAt=performance.now();
  still=0;
 }
 
-function notice(t){
- $('notice').textContent=t;
- $('notice').classList.add('on');
+function toast(text){
+ $('notice').textContent=text;
+ $('notice').classList.add('show');
 
  setTimeout(()=>{
-  $('notice').classList.remove('on');
+  $('notice').classList.remove('show');
  },1250);
 }
 
-function scoreShot(){
- if(mode!=='flight')return;
+function finish(){
+ if(mode!=='flight'||!body)return;
 
  mode='wait';
 
  const x=body.position.x;
- const z=body.position.z+distance;
+ const z=body.position.z+targetDistance;
  const r=Math.hypot(x,z);
 
  const inside=
-  r<.031&&body.position.y<.045;
+  r<.018&&
+  body.position.y<BOWL_H+.003;
 
  const cm=inside?0:Math.round(r*100);
  records.push(cm);
 
- notice(inside?'IN!':cm+' cm');
+ toast(inside?'IN!':cm+' cm');
 
- $('scoreline').textContent=
-  records.map(n=>`${n}cm`).join('  /  ');
+ $('bottom').textContent=
+  records.map(n=>n+' cm').join('  /  ');
 
  setTimeout(()=>{
   round++;
-  if(round===3)end();
-  else resetShot();
- },1700);
+  if(round>=3){
+   showResults();
+  }else{
+   resetShot();
+  }
+ },1600);
 }
 
-function end(){
+function showResults(){
  mode='end';
 
- $('resultNumber').textContent=
-  records.reduce((a,b)=>a+b,0)+' cm';
+ const sum=records.reduce((a,b)=>a+b,0);
+ $('total').textContent=sum+' cm';
 
- $('results').innerHTML=
-  records.map((v,i)=>
-   `BEAN ${i+1}　${v} cm`
+ $('details').innerHTML=
+  records.map(
+   (n,i)=>`BEAN ${i+1}　${n} cm`
   ).join('<br>');
 
  $('intro').classList.add('hidden');
- $('end').classList.remove('hidden');
+ $('result').classList.remove('hidden');
  $('screen').classList.remove('hidden');
 }
 
 $('start').onclick=start;
-$('again').onclick=start;
+$('retry').onclick=start;
 
 $('home').onclick=()=>{
  location.href='../../';
 };
 
 $('share').onclick=()=>{
- const total=records.reduce((a,b)=>a+b,0);
+ const sum=records.reduce((a,b)=>a+b,0);
 
- const txt=
+ const text=
   `🫛 枝豆飛ばし｜IDLE-LAB\n`+
-  `${records.join('cm / ')}cm\n`+
-  `合計 ${total}cm\n`+
+  records.map(
+   (n,i)=>`${i+1}粒目：${n}cm`
+  ).join('\n')+
+  `\n合計 ${sum}cm\n`+
   `#IDLELAB #枝豆飛ばし`;
 
  window.open(
   'https://twitter.com/intent/tweet?'+
   new URLSearchParams({
-   text:txt,
+   text,
    url:location.href
   }),
   '_blank',
@@ -614,7 +716,6 @@ canvas.addEventListener('pointerdown',e=>{
    travel:0,
    started:performance.now()
   };
-
   charge=0;
  }
 });
@@ -630,15 +731,20 @@ canvas.addEventListener('pointermove',e=>{
  });
 
  if(pointers.size===1){
-  // 左右・上下とも1本指ドラッグ
   yaw=Math.max(
-   -38,
-   Math.min(38,yaw+(e.clientX-old.x)*.14)
+   -55,
+   Math.min(
+    55,
+    yaw+(e.clientX-old.x)*.22
+   )
   );
 
   pitch=Math.max(
-   8,
-   Math.min(73,pitch+(old.y-e.clientY)*.13)
+   6,
+   Math.min(
+    76,
+    pitch+(old.y-e.clientY)*.18
+   )
   );
 
   updatePod();
@@ -658,21 +764,23 @@ canvas.addEventListener('pointermove',e=>{
 
   charge=Math.max(
    0,
-   Math.min(1,pinch.travel/105)
+   Math.min(1,pinch.travel/90)
   );
 
   updatePod();
 
-  if(charge>.35&&(d<55||charge>.92)){
+  if(charge>.36&&(d<55||charge>.94)){
    const elapsed=Math.max(
     .07,
     (performance.now()-pinch.started)/1000
    );
 
-   launch(Math.min(
-    1,
-    charge*.55+(charge/elapsed)*.2
-   ));
+   launch(
+    Math.min(
+     1,
+     charge*.6+(charge/elapsed)*.13
+    )
+   );
   }
  }
 });
@@ -681,16 +789,18 @@ function release(e){
  pointers.delete(e.pointerId);
 
  if(mode==='aim'&&pinch&&pointers.size<2){
-  if(charge>.16){
+  if(charge>.15){
    const elapsed=Math.max(
     .07,
     (performance.now()-pinch.started)/1000
    );
 
-   launch(Math.min(
-    1,
-    charge*.6+(charge/elapsed)*.16
-   ));
+   launch(
+    Math.min(
+     1,
+     charge*.6+(charge/elapsed)*.12
+    )
+   );
   }
 
   pinch=null;
@@ -704,27 +814,55 @@ canvas.addEventListener('pointercancel',release);
 
 // PC操作
 let keyStart=0;
+let pcDragging=false;
+let pcX=0;
+let pcY=0;
+
+canvas.addEventListener('mousedown',e=>{
+ if(mode==='aim'){
+  pcDragging=true;
+  pcX=e.clientX;
+  pcY=e.clientY;
+ }
+});
+
+window.addEventListener('mousemove',e=>{
+ if(!pcDragging||mode!=='aim')return;
+
+ yaw=Math.max(
+  -55,
+  Math.min(
+   55,
+   yaw+(e.clientX-pcX)*.22
+  )
+ );
+
+ pitch=Math.max(
+  6,
+  Math.min(
+   76,
+   pitch+(pcY-e.clientY)*.18
+  )
+ );
+
+ pcX=e.clientX;
+ pcY=e.clientY;
+ updatePod();
+});
+
+window.addEventListener('mouseup',()=>{
+ pcDragging=false;
+});
 
 window.addEventListener('keydown',e=>{
  if(mode!=='aim')return;
 
- if([
-  'ArrowLeft','ArrowRight',
-  'ArrowUp','ArrowDown','Space'
- ].includes(e.code)){
+ if(e.code==='Space'){
   e.preventDefault();
+  if(!keyStart){
+   keyStart=performance.now();
+  }
  }
-
- if(e.code==='ArrowLeft')yaw=Math.max(-38,yaw-2);
- if(e.code==='ArrowRight')yaw=Math.min(38,yaw+2);
- if(e.code==='ArrowUp')pitch=Math.min(73,pitch+2);
- if(e.code==='ArrowDown')pitch=Math.max(8,pitch-2);
-
- if(e.code==='Space'&&!keyStart){
-  keyStart=performance.now();
- }
-
- updatePod();
 });
 
 window.addEventListener('keyup',e=>{
@@ -732,14 +870,16 @@ window.addEventListener('keyup',e=>{
   const elapsed=performance.now()-keyStart;
   keyStart=0;
 
-  launch(Math.min(
-   1,
-   Math.max(.1,elapsed/1250)
-  ));
+  launch(
+   Math.min(
+    1,
+    Math.max(.08,elapsed/1250)
+   )
+  );
  }
 });
 
-// 描画と物理演算
+// 物理演算・描画
 const clock=new THREE.Clock();
 
 function animate(){
@@ -755,43 +895,43 @@ function animate(){
 
   const p=body.position;
 
-  const follow=new THREE.Vector3(
-   p.x*.9,
-   p.y+.22,
-   p.z+.57
-  );
-
   camera.position.lerp(
-   follow,
-   Math.min(1,dt*3.8)
+   new THREE.Vector3(
+    p.x*.8,
+    p.y+.16,
+    p.z+.34
+   ),
+   Math.min(1,dt*4)
   );
 
   camera.lookAt(
    p.x,
    p.y,
-   p.z-.18
+   p.z-.09
   );
 
   const elapsed=
-   (performance.now()-shotStart)/1000;
+   (performance.now()-shotAt)/1000;
 
-  if(body.velocity.length()<.07&&p.y<.09){
+  if(
+   body.velocity.length()<.075&&
+   p.y<.06
+  ){
    still+=dt;
   }else{
    still=0;
   }
 
-  if(still>1.05||elapsed>16){
-   scoreShot();
+  if(still>.65||elapsed>8){
+   finish();
   }
 
  }else if(mode==='aim'){
   camera.position.lerp(
-   new THREE.Vector3(0,.42,1.12),
-   Math.min(1,dt*4)
+   new THREE.Vector3(0,.34,.68),
+   Math.min(1,dt*5)
   );
-
-  camera.lookAt(0,.14,-1.1);
+  camera.lookAt(0,.13,-.36);
  }
 
  renderer.render(scene,camera);
@@ -804,7 +944,7 @@ window.addEventListener('resize',()=>{
 });
 
 updatePod();
-$('load').remove();
+$('loading').remove();
 animate();
 </script>
 </body>
