@@ -573,6 +573,7 @@ let groundHits=0;
 let hasGrounded=false;
 let launchCharge=0;
 let pinch=null;
+let pinchSpeed=0;
 let lastShotPosition=null;
 
 const pointers=new Map();
@@ -688,7 +689,7 @@ function launch(strength=1){
  );
  pod.localToWorld(launchOrigin);
 
- const speed=1.5+clamp(strength,0,1)*1.1;
+const speed=1.8+clamp(strength,0,1)*2.7;
 
  bean=new THREE.Mesh(
   new THREE.SphereGeometry(BEAN_R,20,14),
@@ -986,13 +987,14 @@ canvas.addEventListener('pointerdown',e=>{
  if(pointers.size===2){
   const p=[...pointers.values()];
 
-  pinch={
-   initial:Math.hypot(
-    p[0].x-p[1].x,
-    p[0].y-p[1].y
-   ),
-   amount:0
-  };
+pinch={
+ initial:Math.hypot(
+  p[0].x-p[1].x,
+  p[0].y-p[1].y
+ ),
+ amount:0,
+ startTime:performance.now()
+};
  }
 });
 
@@ -1037,9 +1039,25 @@ canvas.addEventListener('pointermove',e=>{
   openAmount=launchCharge*.003;
   updateAim();
 
-  if(launchCharge>.65){
-   launch(launchCharge);
-  }
+
+if(launchCharge>.65){
+ const elapsed=Math.max(
+  50,
+  performance.now()-pinch.startTime
+ );
+
+ // つまむ速さを計算
+ const velocity=pinch.amount/elapsed;
+
+ // 速いほど強く飛ぶ
+ pinchSpeed=clamp(
+  (velocity-.1)/.9,
+  0,1
+ );
+
+ launch(pinchSpeed);
+}
+
  }
 });
 
@@ -1047,9 +1065,21 @@ function releasePointer(e){
  pointers.delete(e.pointerId);
 
  if(mode==='aim'&&pinch&&pointers.size<2){
-  if(launchCharge>.22){
-   launch(launchCharge);
-  }else{
+if(launchCharge>.22){
+ const elapsed=Math.max(
+  50,
+  performance.now()-pinch.startTime
+ );
+
+ const velocity=pinch.amount/elapsed;
+
+ pinchSpeed=clamp(
+  (velocity-.1)/.9,
+  0,1
+ );
+
+ launch(pinchSpeed);
+}else{
    openAmount=0;
    updateAim();
   }
