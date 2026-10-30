@@ -118,7 +118,7 @@ const darkWood=material(0x543e30);
 const podGreen=material(0x79aa48);
 const podLight=material(0x94c75c);
 const podDark=material(0x41692f);
-const seamMat=material(0x31532b);
+const seamMat=material(0x24471c,.9);
 const beanGreen=material(0xa7c76c,.58);
 const ceramicOuter=material(0xe9e3d6,.37,{
  side:THREE.DoubleSide
@@ -428,7 +428,7 @@ for(const offset of [-.0035,0,.0035]){
    new THREE.Vector3(
     x,
     offset,
-    z-.001
+    z-.003
    )
   );
  }
@@ -438,7 +438,7 @@ for(const offset of [-.0035,0,.0035]){
   new THREE.TubeGeometry(
    curve,
    90,
-   offset===0?.0019:.00085,
+   offset===0?.0032:.0012,
    6,
    false
   ),
@@ -582,8 +582,8 @@ function launch(strength){
   mass:.0012,
   material:beanMaterial,
   shape:new CANNON.Sphere(BEAN_R),
-  linearDamping:.65,
-  angularDamping:.97,
+  linearDamping:.82,
+  angularDamping:.995,
   allowSleep:true,
   sleepSpeedLimit:.06,
   sleepTimeLimit:.5
@@ -739,13 +739,7 @@ canvas.addEventListener('pointermove',e=>{
    )
   );
 
-  pitch=Math.max(
-   6,
-   Math.min(
-    76,
-    pitch+(old.y-e.clientY)*.18
-   )
-  );
+pitch += (old.y-e.clientY)*.24;
 
   updatePod();
 
@@ -889,6 +883,33 @@ function animate(){
 
  if(mode==='flight'&&body){
   world.step(1/120,dt,5);
+  // 床に落ちた豆の転がりを抑制
+if (body) {
+  const onGround = body.position.y <= BEAN_R + .003;
+
+  if (onGround) {
+    const damping = Math.pow(0.12, dt * 12);
+
+    body.velocity.x *= damping;
+    body.velocity.z *= damping;
+
+    body.angularVelocity.x *= damping;
+    body.angularVelocity.y *= damping;
+    body.angularVelocity.z *= damping;
+
+    // 十分遅くなったら完全停止
+    const horizontalSpeed = Math.hypot(
+      body.velocity.x,
+      body.velocity.z
+    );
+
+    if (horizontalSpeed < .045) {
+      body.velocity.x = 0;
+      body.velocity.z = 0;
+      body.angularVelocity.set(0, 0, 0);
+    }
+  }
+}
 
   bean.position.copy(body.position);
   bean.quaternion.copy(body.quaternion);
