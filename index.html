@@ -2,430 +2,327 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#101110">
-  <title>IDLE-LAB | ひまゲー開発委員会</title>
-
-  <style>
-    :root {
-      --bg: #101110;
-      --surface: #1b1d1a;
-      --text: #f0f0e9;
-      --muted: #898d85;
-      --accent: #c6f36b;
-      --border: #343731;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    html {
-      scroll-behavior: smooth;
-    }
-
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-family: Arial, "Helvetica Neue", sans-serif;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    a {
-      color: inherit;
-      text-decoration: none;
-    }
-
-    /* Navigation */
-
-    .nav {
-      max-width: 1200px;
-      margin: auto;
-      padding: 28px 32px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .logo {
-      font-size: 20px;
-      font-weight: 900;
-      letter-spacing: -1px;
-    }
-
-    .logo span {
-      color: var(--accent);
-    }
-
-    .nav-right {
-      font-size: 12px;
-      color: var(--muted);
-      letter-spacing: 2px;
-    }
-
-    /* Hero */
-
-    .hero {
-      max-width: 1200px;
-      margin: auto;
-      padding: 115px 32px 105px;
-    }
-
-    .hero h1 {
-      margin: 25px 0;
-      font-size: clamp(65px, 13vw, 170px);
-      line-height: 0.9;
-      letter-spacing: -0.09em;
-      font-weight: 900;
-    }
-
-    .hero h1 span {
-      color: var(--accent);
-    }
-
-    .hero-dash {
-      display: inline-block;
-      margin-left: 0.12em;
-      letter-spacing: 0;
-    }
-
-    .hero-bottom {
-      margin-top: 45px;
-      display: flex;
-      justify-content: space-between;
-      align-items: end;
-      gap: 30px;
-    }
-
-    .catchcopy {
-      font-size: clamp(18px, 3vw, 28px);
-      font-weight: bold;
-      letter-spacing: -1px;
-      line-height: 1.6;
-    }
-
-    /* Games */
-
-    .games-section {
-      border-top: 1px solid var(--border);
-      max-width: 1200px;
-      margin: auto;
-      padding: 50px 32px 110px;
-    }
-
-    .section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 35px;
-    }
-
-    .section-title {
-      font-size: 13px;
-      font-weight: bold;
-      letter-spacing: 2px;
-    }
-
-    .game-count {
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    .game-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 24px;
-    }
-
-    .game-card {
-      display: block;
-      min-width: 0;
-    }
-
-    .game-visual {
-      aspect-ratio: 16 / 10;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      overflow: hidden;
-      transition: border-color 0.25s;
-    }
-
-    .game-card:hover .game-visual {
-      border-color: var(--accent);
-    }
-
-    .game-number {
-      position: absolute;
-      top: 20px;
-      left: 22px;
-      font-size: 12px;
-      color: var(--muted);
-      letter-spacing: 2px;
-    }
-
-    .game-art {
-      font-size: clamp(50px, 9vw, 100px);
-      font-weight: 900;
-      letter-spacing: -7px;
-      color: var(--accent);
-    }
-
-    .game-art small {
-      font-size: 18px;
-      letter-spacing: 0;
-    }
-
-    .game-info {
-      padding-top: 22px;
-      display: flex;
-      justify-content: space-between;
-      align-items: start;
-      gap: 12px;
-    }
-
-    .game-title {
-      font-size: 20px;
-      font-weight: bold;
-      margin: 0 0 10px;
-    }
-
-    .game-desc {
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.8;
-      margin: 0;
-    }
-
-    .game-status {
-      font-size: 10px;
-      color: var(--accent);
-      border: 1px solid var(--accent);
-      padding: 6px 10px;
-      white-space: nowrap;
-      letter-spacing: 1px;
-    }
-
-    /* Edamame artwork */
-
-    .edamame-art {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background:
-        radial-gradient(
-          ellipse at 50% 55%,
-          #34422b 0%,
-          #20291d 42%,
-          #171d16 100%
-        );
-    }
-
-    .edamame-icon {
-      font-size: clamp(90px, 15vw, 155px);
-      line-height: 1;
-      transform: rotate(-25deg);
-      filter: drop-shadow(0 18px 15px #0007);
-      transition: transform 0.3s ease;
-    }
-
-    .game-card:hover .edamame-icon {
-      transform: rotate(-15deg) scale(1.08);
-    }
-
-    .edamame-target {
-      position: absolute;
-      right: 17%;
-      top: 19%;
-      font-size: clamp(30px, 5vw, 55px);
-      transform: rotate(12deg);
-      filter: drop-shadow(0 8px 6px #0005);
-    }
-
-    .edamame-trail {
-      position: absolute;
-      width: 23%;
-      height: 2px;
-      top: 46%;
-      right: 26%;
-      border-top: 2px dashed #c6f36b;
-      transform: rotate(-27deg);
-      opacity: 0.6;
-    }
-
-    /* Footer */
-
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 35px 32px;
-    }
-
-    .footer-inner {
-      max-width: 1136px;
-      margin: auto;
-      display: flex;
-      justify-content: space-between;
-      gap: 20px;
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    .footer-logo {
-      color: var(--text);
-      font-weight: 900;
-      letter-spacing: -0.5px;
-    }
-
-    /* Mobile */
-
-    @media (max-width: 650px) {
-      .nav {
-        padding: 22px 20px;
-      }
-
-      .nav-right {
-        font-size: 10px;
-      }
-
-      .hero {
-        padding: 95px 20px 85px;
-      }
-
-      .hero h1 {
-        font-size: clamp(55px, 15vw, 95px);
-        letter-spacing: -0.085em;
-      }
-
-      .hero-bottom {
-        flex-direction: column;
-        align-items: start;
-        gap: 15px;
-      }
-
-      .games-section {
-        padding: 35px 20px 80px;
-      }
-
-      .game-grid {
-        grid-template-columns: 1fr;
-        gap: 45px;
-      }
-
-      .game-title {
-        font-size: 18px;
-      }
-
-      .edamame-icon {
-        font-size: 125px;
-      }
-
-      footer {
-        padding: 30px 20px;
-      }
-
-      .footer-inner {
-        flex-direction: column;
-        gap: 10px;
-      }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#101110">
+<title>IDLE-LAB | ひまゲー開発委員会</title>
+<style>
+:root{
+  --bg:#101110;
+  --surface:#1b1d1a;
+  --text:#f0f0e9;
+  --muted:#898d85;
+  --accent:#c6f36b;
+  --border:#343731;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Arial,"Helvetica Neue",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit;text-decoration:none}
+.nav{
+  max-width:1200px;
+  margin:auto;
+  padding:28px 32px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  border-bottom:1px solid var(--border);
+}
+.logo{
+  font-size:20px;
+  font-weight:900;
+  letter-spacing:-1px;
+}
+.logo span{color:var(--accent)}
+.nav-right{
+  font-size:12px;
+  color:var(--muted);
+  letter-spacing:2px;
+}
+.hero{
+  max-width:1200px;
+  margin:auto;
+  padding:115px 32px 105px;
+}
+.hero h1{
+  margin:25px 0;
+  font-size:clamp(65px,13vw,170px);
+  line-height:.9;
+  letter-spacing:-.09em;
+  font-weight:900;
+}
+.hero h1 span{color:var(--accent)}
+.hero-dash{
+  display:inline-block;
+  margin-left:.12em;
+  letter-spacing:0;
+}
+.catchcopy{
+  margin-top:45px;
+  font-size:clamp(18px,3vw,28px);
+  font-weight:bold;
+  letter-spacing:-1px;
+}
+.games-section{
+  border-top:1px solid var(--border);
+  max-width:1200px;
+  margin:auto;
+  padding:50px 32px 110px;
+}
+.section-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:35px;
+}
+.section-title{
+  font-size:13px;
+  font-weight:bold;
+  letter-spacing:2px;
+}
+.game-count{
+  color:var(--muted);
+  font-size:12px;
+}
+.game-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:24px;
+}
+.game-card{
+  display:block;
+  min-width:0;
+}
+.game-visual{
+  aspect-ratio:16/10;
+  background:
+    radial-gradient(
+      ellipse at center,
+      #303b29,
+      #1b2119 60%,
+      #171917
+    );
+  border:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  overflow:hidden;
+  transition:border-color .25s;
+}
+.game-card:hover .game-visual{
+  border-color:var(--accent);
+}
+.game-number{
+  position:absolute;
+  top:20px;
+  left:22px;
+  font-size:12px;
+  color:var(--muted);
+  letter-spacing:2px;
+}
+.game-art{
+  font-size:clamp(75px,11vw,125px);
+  transition:transform .25s;
+  filter:drop-shadow(0 15px 15px #0007);
+}
+.game-card:hover .game-art{
+  transform:scale(1.12) rotate(-8deg);
+}
+.game-info{
+  padding-top:22px;
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+}
+.game-title{
+  font-size:20px;
+  font-weight:bold;
+  margin:0 0 10px;
+}
+.game-desc{
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.8;
+  margin:0;
+}
+.game-status{
+  font-size:10px;
+  color:var(--accent);
+  border:1px solid var(--accent);
+  padding:6px 10px;
+  white-space:nowrap;
+  letter-spacing:1px;
+}
+footer{
+  border-top:1px solid var(--border);
+  padding:35px 32px;
+}
+.footer-inner{
+  max-width:1136px;
+  margin:auto;
+  display:flex;
+  justify-content:space-between;
+  gap:20px;
+  color:var(--muted);
+  font-size:12px;
+}
+.footer-logo{
+  color:var(--text);
+  font-weight:900;
+}
+@media(max-width:650px){
+  .nav{padding:22px 20px}
+  .nav-right{font-size:10px}
+  .hero{padding:95px 20px 85px}
+  .hero h1{
+    font-size:clamp(55px,15vw,95px);
+  }
+  .games-section{
+    padding:35px 20px 80px;
+  }
+  .game-grid{
+    grid-template-columns:1fr;
+    gap:45px;
+  }
+  .game-title{font-size:18px}
+  footer{padding:30px 20px}
+  .footer-inner{
+    flex-direction:column;
+    gap:10px;
+  }
+}
+</style>
 </head>
-
 <body>
 
-  <!-- Navigation -->
-  <nav class="nav">
-    <a href="./" class="logo">
-      IDLE<span>-</span>LAB.
-    </a>
-    <div class="nav-right">NEW GAME EVERY SUNDAY</div>
-  </nav>
+<nav class="nav">
+  <a href="./" class="logo">
+    IDLE<span>-</span>LAB.
+  </a>
+  <div class="nav-right">
+    NEW GAME EVERY SUNDAY
+  </div>
+</nav>
 
-  <!-- Hero -->
-  <header class="hero">
-    <h1>
-      IDLE<span class="hero-dash">-</span><br>LAB.
-    </h1>
+<header class="hero">
+  <h1>
+    IDLE<span class="hero-dash">-</span><br>LAB.
+  </h1>
+  <div class="catchcopy">
+    ひまゲー開発委員会
+  </div>
+</header>
 
-    <div class="hero-bottom">
-      <div class="catchcopy">
-        ひまゲー開発委員会
-      </div>
+<main class="games-section" id="games">
+  <div class="section-header">
+    <div class="section-title">
+      ALL GAMES / 作品一覧
     </div>
-  </header>
-
-  <!-- Games -->
-  <main class="games-section" id="games">
-
-    <div class="section-header">
-      <div class="section-title">ALL GAMES / 作品一覧</div>
-      <div class="game-count">001 —</div>
+    <div class="game-count" id="gameCount">
+      —
     </div>
+  </div>
 
-    <div class="game-grid">
+  <div class="game-grid" id="gameGrid"></div>
+</main>
 
-      <!-- GAME 001 : 枝豆飛ばし -->
-      <a href="./games/001/" class="game-card">
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">IDLE-LAB.</div>
+    <div>SMALL GAMES. GOOD TIMES.</div>
+    <div>© 2026 IDLE-LAB</div>
+  </div>
+</footer>
 
-        <div class="game-visual">
-          <div class="game-number">NO. 001</div>
+<script>
+const icons={
+  "001":"🫛"
+};
 
-          <div class="edamame-art">
-            <div class="edamame-icon">🫛</div>
-            <div class="edamame-trail"></div>
-            <div class="edamame-target">🍚</div>
-          </div>
-        </div>
+async function loadGames(){
+  const grid=document.getElementById("gameGrid");
+  const count=document.getElementById("gameCount");
 
-        <div class="game-info">
-          <div>
-            <h2 class="game-title">
-              枝豆飛ばし
-            </h2>
-            <p class="game-desc">
-              枝豆をつまんで、飛ばす。<br>
-              狙うは遠くのお茶碗。
-            </p>
-          </div>
+  try{
+    const response=await fetch(
+      "./games.json",
+      {cache:"no-cache"}
+    );
 
-          <span class="game-status">
-            PLAY
-          </span>
-        </div>
-      </a>
+    if(!response.ok){
+      throw new Error("games.json not found");
+    }
 
-      <!--
-      GAME 002以降はここに追加。
+    const games=await response.json();
 
-      <a href="./games/002/" class="game-card">
-        ...
-      </a>
-      -->
+    count.textContent=
+      String(games.length).padStart(3,"0")+" GAMES";
 
-    </div>
-  </main>
+    grid.replaceChildren();
 
-  <!-- Footer -->
-  <footer>
-    <div class="footer-inner">
-      <div class="footer-logo">IDLE-LAB.</div>
-      <div>
-        SMALL GAMES. GOOD TIMES.
-      </div>
-      <div>
-        © 2026 IDLE-LAB
-      </div>
-    </div>
-  </footer>
+    for(const game of games){
+      const card=document.createElement("a");
+      card.className="game-card";
+      card.href=game.url;
 
+      const visual=document.createElement("div");
+      visual.className="game-visual";
+
+      const number=document.createElement("div");
+      number.className="game-number";
+      number.textContent="NO. "+game.id;
+
+      const art=document.createElement("div");
+      art.className="game-art";
+      art.textContent=icons[game.id]||"🎮";
+
+      visual.append(number,art);
+
+      const info=document.createElement("div");
+      info.className="game-info";
+
+      const details=document.createElement("div");
+
+      const title=document.createElement("h2");
+      title.className="game-title";
+      title.textContent=game.title;
+
+      const desc=document.createElement("p");
+      desc.className="game-desc";
+      desc.textContent=game.description;
+
+      details.append(title,desc);
+
+      const status=document.createElement("span");
+      status.className="game-status";
+      status.textContent="PLAY";
+
+      info.append(details,status);
+      card.append(visual,info);
+      grid.append(card);
+    }
+
+  }catch(error){
+    console.error(error);
+    count.textContent="—";
+
+    const message=document.createElement("p");
+    message.className="game-desc";
+    message.textContent=
+      "ゲーム一覧を読み込めませんでした。";
+
+    grid.replaceChildren(message);
+  }
+}
+
+loadGames();
+</script>
 </body>
 </html>
