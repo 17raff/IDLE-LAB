@@ -66,21 +66,15 @@
       letter-spacing: 2px;
     }
 
+   
     /* Hero */
-
+    
     .hero {
       max-width: 1200px;
       margin: auto;
       padding: 115px 32px 105px;
     }
-
-    .eyebrow {
-      font-size: 12px;
-      color: var(--accent);
-      letter-spacing: 3px;
-      font-weight: bold;
-    }
-
+    
     .hero h1 {
       margin: 25px 0;
       font-size: clamp(65px, 13vw, 170px);
@@ -88,11 +82,17 @@
       letter-spacing: -0.09em;
       font-weight: 900;
     }
-
+    
     .hero h1 span {
       color: var(--accent);
     }
-
+    
+    .hero-dash {
+      display: inline-block;
+      margin-left: 0.12em;
+      letter-spacing: 0;
+    }
+    
     .hero-bottom {
       margin-top: 45px;
       display: flex;
@@ -100,7 +100,7 @@
       align-items: end;
       gap: 30px;
     }
-
+    
     .catchcopy {
       font-size: clamp(18px, 3vw, 28px);
       font-weight: bold;
@@ -108,12 +108,6 @@
       line-height: 1.6;
     }
 
-    .description {
-      font-size: 13px;
-      color: var(--muted);
-      line-height: 2;
-      text-align: right;
-    }
 
     /* Games */
 
@@ -329,28 +323,20 @@
     <div class="nav-right">NEW GAME EVERY SUNDAY</div>
   </nav>
 
-  <!-- Hero -->
-  <header class="hero">
-    <div class="eyebrow">
-      INDEPENDENT MINI GAME PROJECT
+  
+<!-- Hero -->
+<header class="hero">
+  <h1>
+    IDLE<span class="hero-dash">-</span><br>LAB.
+  </h1>
+
+  <div class="hero-bottom">
+    <div class="catchcopy">
+      ひまゲー開発委員会
     </div>
+  </div>
+</header>
 
-    <h1>
-      IDLE<span>—</span><br>LAB.
-    </h1>
-
-    <div class="hero-bottom">
-      <div class="catchcopy">
-        暇を、遊ぶ。<br>
-        毎週日曜、ひとつのゲーム。
-      </div>
-
-      <div class="description">
-        A collection of tiny games.<br>
-        Made for your spare time.
-      </div>
-    </div>
-  </header>
 
   <!-- Games -->
   <main class="games-section" id="games">
