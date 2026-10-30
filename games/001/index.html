@@ -1,92 +1,172 @@
 
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8">
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#171513">
-<meta name="description" content="枝豆をつまんで、遠くのお茶碗を狙う3Dミニゲーム。">
+<meta name="description" content="枝豆をつまんで、小さなお茶碗を狙う3Dミニゲーム。">
 <title>枝豆飛ばし | IDLE-LAB</title>
 <style>
 *{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#171513;color:#f5f1e9;font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif}
+html,body{
+ margin:0;width:100%;height:100%;overflow:hidden;
+ background:#171513;color:#f5f1e9;
+ font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif
+}
 canvas{display:block;touch-action:none}
 #app,#ui{position:fixed;inset:0}
 #ui{pointer-events:none}
-header{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;padding:calc(env(safe-area-inset-top) + 17px) 20px 16px;background:linear-gradient(#15120edc,transparent);font-weight:850;letter-spacing:1.5px;font-size:12px}
-.sub{font-size:10px;opacity:.65;font-weight:600;letter-spacing:1px}
+header{
+ position:absolute;top:0;left:0;right:0;
+ padding:calc(env(safe-area-inset-top) + 17px) 20px 20px;
+ display:flex;justify-content:space-between;align-items:flex-start;
+ background:linear-gradient(#171513ed,transparent);
+ font-size:12px;font-weight:900;letter-spacing:1.5px
+}
+.sub{font-size:10px;opacity:.7;letter-spacing:1px}
 .distance{text-align:right}
-.distance strong{display:block;font-size:25px;color:#c6f36b;letter-spacing:0}
-.beans{font-size:20px;letter-spacing:4px;color:#c6f36b;margin-top:5px}
-#bottom{position:absolute;bottom:calc(env(safe-area-inset-bottom) + 20px);left:0;right:0;text-align:center;font-size:14px;font-weight:800;text-shadow:0 2px 9px #000}
-#notice{position:absolute;top:40%;left:0;right:0;text-align:center;font-size:35px;font-weight:900;text-shadow:0 4px 15px #000;opacity:0;transition:opacity .2s}
+.distance strong{
+ display:block;color:#c6f36b;
+ font-size:26px;letter-spacing:0
+}
+.beans{
+ margin-top:7px;color:#c6f36b;
+ font-size:20px;letter-spacing:5px
+}
+#bottom{
+ position:absolute;
+ bottom:calc(env(safe-area-inset-bottom) + 24px);
+ left:10px;right:10px;text-align:center;
+ font-size:14px;font-weight:800;
+ text-shadow:0 2px 8px #000
+}
+#notice{
+ position:absolute;top:38%;left:0;right:0;
+ text-align:center;font-size:35px;font-weight:900;
+ text-shadow:0 4px 16px #000;
+ opacity:0;transition:opacity .2s
+}
 #notice.show{opacity:1}
-#screen{position:fixed;inset:0;z-index:5;background:#131411e9;display:grid;place-items:center;padding:22px}
-.panel{width:min(400px,100%);padding:30px 24px;background:#22231e;border:1px solid #555e4c;border-radius:22px;text-align:center;box-shadow:0 24px 80px #0009}
-.eyebrow{font-size:11px;color:#c6f36b;letter-spacing:3px;font-weight:850}
-.panel h1{font-size:clamp(32px,9vw,46px);margin:12px 0}
-.panel p{font-size:14px;color:#d4d5cb;line-height:1.85}
-.howto{margin:20px 0 6px;padding:15px;background:#141914;border-radius:12px;text-align:left;font-size:13px;line-height:2}
+#screen{
+ position:fixed;inset:0;z-index:5;
+ display:grid;place-items:center;
+ background:#131411ed;padding:22px
+}
+.panel{
+ width:min(400px,100%);
+ padding:30px 24px;
+ border:1px solid #515b48;
+ border-radius:22px;
+ background:#22231e;
+ text-align:center;
+ box-shadow:0 25px 80px #0009
+}
+.eyebrow{
+ font-size:11px;color:#c6f36b;
+ letter-spacing:3px;font-weight:900
+}
+.panel h1{
+ font-size:clamp(30px,9vw,44px);
+ margin:12px 0
+}
+.panel p{
+ color:#d4d5cb;font-size:14px;line-height:1.85
+}
+.howto{
+ margin:20px 0 5px;padding:16px;
+ background:#141914;border-radius:12px;
+ text-align:left;font-size:13px;line-height:2.1
+}
 .howto b{color:#c6f36b}
-.panel button{width:100%;padding:15px;margin-top:14px;border:0;border-radius:11px;background:#c6f36b;color:#1a2410;font-size:16px;font-weight:900;cursor:pointer}
-.panel button.secondary{background:transparent;color:#f5f1e9;border:1px solid #687260;margin-top:9px}
-#total{font-size:49px;color:#c6f36b;font-weight:900;margin:12px 0}
+.panel button{
+ display:block;width:100%;margin-top:13px;padding:15px;
+ border:0;border-radius:11px;
+ background:#c6f36b;color:#1a2410;
+ font-size:16px;font-weight:900;cursor:pointer
+}
+.panel button.secondary{
+ background:transparent;color:#f5f1e9;
+ border:1px solid #687260;margin-top:9px
+}
+#total{
+ font-size:50px;font-weight:900;
+ color:#c6f36b;margin:12px 0
+}
 #details{font-size:14px;line-height:2.2}
 .hidden{display:none!important}
-#loading{position:fixed;inset:0;z-index:10;background:#171513;display:grid;place-items:center;font-size:16px;color:#c6f36b;font-weight:900}
+#loading{
+ position:fixed;inset:0;z-index:10;
+ display:grid;place-items:center;
+ background:#171513;color:#c6f36b;
+ font-weight:900
+}
 </style>
 </head>
 <body>
 <div id="app"></div>
+
 <div id="ui">
 <header>
-<div>
-<div>IDLE-LAB / 001</div>
-<div class="beans" id="beans">● ● ●</div>
-</div>
-<div class="distance">
-<div class="sub">お茶碗まで</div>
-<strong id="distance">— cm</strong>
-</div>
+ <div>
+  <div>IDLE-LAB / 001</div>
+  <div class="beans" id="beans">● ● ●</div>
+ </div>
+ <div class="distance">
+  <div class="sub">お茶碗まで</div>
+  <strong id="distance">— cm</strong>
+ </div>
 </header>
 <div id="notice"></div>
 <div id="bottom"></div>
 </div>
 
 <div id="screen">
-<div class="panel" id="intro">
-<div class="eyebrow">GAME 001</div>
-<h1>🫛 枝豆飛ばし</h1>
-<p>3粒の枝豆を、小さなお茶碗へ。<br>止まった場所が近いほど好記録。</p>
-<div class="howto">
-<div><b>1本指でドラッグ</b>　上下左右に狙う</div>
-<div><b>2本指でつまむ</b>　豆を発射</div>
-<div><b>PC</b>　ドラッグで狙い、スペース長押し→離す</div>
+ <div class="panel" id="intro">
+  <div class="eyebrow">GAME 001</div>
+  <h1>🫛 枝豆飛ばし</h1>
+  <p>枝豆をつまんで、お茶碗へ。<br>
+  3粒の合計距離が短いほど高得点！</p>
+  <div class="howto">
+   <div><b>1本指</b>　上下左右に向きを変える</div>
+   <div><b>2本指</b>　ギュッとつまんで発射</div>
+   <div><b>PC</b>　ドラッグで狙い、スペースで発射</div>
+  </div>
+  <button id="start">START</button>
+ </div>
+
+ <div class="panel hidden" id="result">
+  <div class="eyebrow">RESULT</div>
+  <h1>枝豆飛ばし</h1>
+  <div id="total"></div>
+  <div id="details"></div>
+  <button id="retry">RETRY</button>
+  <button class="secondary" id="share">𝕏 SHARE</button>
+  <button class="secondary" id="home">BACK TO IDLE-LAB</button>
+ </div>
 </div>
-<button id="start">START</button>
-</div>
-<div class="panel hidden" id="result">
-<div class="eyebrow">RESULT</div>
-<h1>枝豆飛ばし</h1>
-<div id="total"></div>
-<div id="details"></div>
-<button id="retry">RETRY</button>
-<button class="secondary" id="share">𝕏 SHARE</button>
-<button class="secondary" id="home">BACK TO IDLE-LAB</button>
-</div>
-</div>
-<div id="loading">🫛　準備中...</div>
+
+<div id="loading">🫛 準備中...</div>
 
 <script type="module">
-import * as THREE from 'https://esm.sh/three@0.180.0';
-import * as CANNON from 'https://esm.sh/cannon-es@0.20.0';
+import * as THREE from
+ 'https://esm.sh/three@0.180.0';
+
+import * as CANNON from
+ 'https://esm.sh/cannon-es@0.20.0';
 
 const $=id=>document.getElementById(id);
+const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+const PI=Math.PI;
+
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x3a322c);
 scene.fog=new THREE.Fog(0x3a322c,5,16);
 
-const camera=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,.01,30);
+const camera=new THREE.PerspectiveCamera(
+ 52,innerWidth/innerHeight,.005,30
+);
+
 const renderer=new THREE.WebGLRenderer({
  antialias:true,
  powerPreference:'high-performance'
@@ -98,112 +178,108 @@ renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 $('app').appendChild(renderer.domElement);
 
-scene.add(new THREE.HemisphereLight(0xffe8cc,0x5c5549,2));
+const mat=(color,roughness=.8,extra={})=>
+ new THREE.MeshStandardMaterial({
+  color,roughness,...extra
+ });
 
-const sun=new THREE.DirectionalLight(0xffe2ae,2.8);
-sun.position.set(-1.5,4,2);
-sun.castShadow=true;
-sun.shadow.mapSize.set(1024,1024);
-sun.shadow.camera.left=-2;
-sun.shadow.camera.right=2;
-sun.shadow.camera.top=2;
-sun.shadow.camera.bottom=-2;
-scene.add(sun);
-
-const material=(color,roughness=.75,opts={})=>
- new THREE.MeshStandardMaterial({color,roughness,...opts});
-
-const wood=material(0x8b6448,.91);
-const darkWood=material(0x543e30);
-const podGreen=material(0x79aa48);
-const podLight=material(0x94c75c);
-const podDark=material(0x41692f);
-const seamMat=material(0x24471c,.9);
-const beanGreen=material(0xa7c76c,.58);
-const ceramicOuter=material(0xe9e3d6,.37,{
+const podMat=mat(0x83ad4b,.9,{
  side:THREE.DoubleSide
 });
-const ceramicInner=material(0xc9d8d3,.4,{
+const podDark=mat(0x466b2c);
+const seamMat=mat(0x355521);
+const beanMat=mat(0xa7c876,.65);
+const woodMat=mat(0x896448,.92);
+const wallMat=mat(0x70645b,.96);
+const ceramic=mat(0xe8e4d9,.42,{
+ side:THREE.DoubleSide
+});
+const ceramicInside=mat(0xc4d7d2,.42,{
  side:THREE.DoubleSide
 });
 
-// 木製床
+scene.add(new THREE.HemisphereLight(
+ 0xffe8cb,0x554c43,2.1
+));
+
+const sunlight=new THREE.DirectionalLight(
+ 0xffe4bb,2.7
+);
+sunlight.position.set(-1.5,4,2);
+sunlight.castShadow=true;
+sunlight.shadow.mapSize.set(1024,1024);
+sunlight.shadow.camera.left=-2;
+sunlight.shadow.camera.right=2;
+sunlight.shadow.camera.top=2;
+sunlight.shadow.camera.bottom=-2;
+scene.add(sunlight);
+
 const floor=new THREE.Mesh(
  new THREE.PlaneGeometry(30,30),
- wood
+ woodMat
 );
-floor.rotation.x=-Math.PI/2;
+floor.rotation.x=-PI/2;
 floor.receiveShadow=true;
 scene.add(floor);
 
-for(let i=-16;i<=16;i++){
- const m=new THREE.Mesh(
-  new THREE.BoxGeometry(.004,.001,12),
-  darkWood
- );
- m.position.set(i*.17,.001,-2);
- scene.add(m);
-}
+const grainMat=mat(0x523e31,.95,{
+ transparent:true,opacity:.23
+});
 
-for(let i=0;i<75;i++){
- const m=new THREE.Mesh(
-  new THREE.BoxGeometry(.001,.001,.04+Math.random()*.3),
-  material(0xb9906c,.9,{
-   transparent:true,
-   opacity:.16
-  })
+for(let i=-80;i<=80;i++){
+ const grain=new THREE.Mesh(
+  new THREE.BoxGeometry(.001,.001,8),
+  grainMat
  );
- m.position.set(
-  (Math.random()-.5)*4,
-  .002,
-  -Math.random()*5
- );
- scene.add(m);
+ grain.position.set(i*.035,.001,-2);
+ scene.add(grain);
 }
 
 const wall=new THREE.Mesh(
  new THREE.PlaneGeometry(15,8),
- material(0x70645b,.95)
+ wallMat
 );
 wall.position.set(0,4,-4.8);
 scene.add(wall);
 
-// 物理エンジン
+// 物理
 const world=new CANNON.World({
  gravity:new CANNON.Vec3(0,-9.82,0)
 });
 world.allowSleep=true;
-world.solver.iterations=14;
+world.solver.iterations=15;
 world.broadphase=new CANNON.SAPBroadphase(world);
 
-const floorMaterial=new CANNON.Material('wood');
-const beanMaterial=new CANNON.Material('bean');
-const bowlMaterial=new CANNON.Material('bowl');
+const floorPhys=new CANNON.Material('floor');
+const beanPhys=new CANNON.Material('bean');
+const bowlPhys=new CANNON.Material('bowl');
 
 world.addContactMaterial(
  new CANNON.ContactMaterial(
-  floorMaterial,
-  beanMaterial,
-  {friction:.9,restitution:.12}
+  floorPhys,beanPhys,{
+   friction:.7,
+   restitution:.36
+  }
  )
 );
 world.addContactMaterial(
  new CANNON.ContactMaterial(
-  bowlMaterial,
-  beanMaterial,
-  {friction:.7,restitution:.15}
+  bowlPhys,beanPhys,{
+   friction:.5,
+   restitution:.24
+  }
  )
 );
 
-const floorBody=new CANNON.Body({
+const ground=new CANNON.Body({
  mass:0,
- material:floorMaterial,
+ material:floorPhys,
  shape:new CANNON.Plane()
 });
-floorBody.quaternion.setFromEuler(-Math.PI/2,0,0);
-world.addBody(floorBody);
+ground.quaternion.setFromEuler(-PI/2,0,0);
+world.addBody(ground);
 
-// お茶碗：直径5cm、高さ約2.7cm
+// お茶碗
 const BOWL_R=.025;
 const BOWL_H=.027;
 const BEAN_R=.008;
@@ -213,14 +289,11 @@ let bowlGroup=null;
 let bowlBodies=[];
 
 function bowlRadius(y){
- const t=Math.max(
-  0,
-  Math.min(1,y/BOWL_H)
- );
- return .011+.014*Math.pow(t,.86);
+ const t=clamp(y/BOWL_H,0,1);
+ return .011+.014*Math.pow(t,.85);
 }
 
-function createBowl(){
+function makeBowl(){
  if(bowlGroup)scene.remove(bowlGroup);
 
  for(const b of bowlBodies){
@@ -232,88 +305,81 @@ function createBowl(){
  bowlGroup.position.z=-targetDistance;
  scene.add(bowlGroup);
 
- const profile=[];
- for(let i=0;i<=24;i++){
-  const y=BOWL_H*i/24;
-  profile.push(
-   new THREE.Vector2(bowlRadius(y),y)
-  );
+ const outer=[];
+ const inner=[];
+
+ for(let i=0;i<=32;i++){
+  const y=BOWL_H*i/32;
+  outer.push(new THREE.Vector2(
+   bowlRadius(y),y
+  ));
+
+  const yi=.004+(BOWL_H-.004)*i/32;
+  inner.push(new THREE.Vector2(
+   Math.max(.004,bowlRadius(yi)-.003),
+   yi
+  ));
  }
 
  const shell=new THREE.Mesh(
-  new THREE.LatheGeometry(profile,48),
-  ceramicOuter
+  new THREE.LatheGeometry(outer,48),
+  ceramic
  );
  shell.castShadow=true;
  shell.receiveShadow=true;
  bowlGroup.add(shell);
 
- const inside=[];
- for(let i=0;i<=24;i++){
-  const y=.004+(BOWL_H-.004)*i/24;
-  inside.push(
-   new THREE.Vector2(
-    Math.max(.004,bowlRadius(y)-.003),
-    y
-   )
-  );
- }
-
- const liner=new THREE.Mesh(
-  new THREE.LatheGeometry(inside,48),
-  ceramicInner
+ const lining=new THREE.Mesh(
+  new THREE.LatheGeometry(inner,48),
+  ceramicInside
  );
- liner.receiveShadow=true;
- bowlGroup.add(liner);
+ lining.receiveShadow=true;
+ bowlGroup.add(lining);
 
  const rim=new THREE.Mesh(
   new THREE.TorusGeometry(.024,.0015,8,48),
-  ceramicOuter
+  ceramic
  );
- rim.rotation.x=Math.PI/2;
+ rim.rotation.x=PI/2;
  rim.position.y=BOWL_H;
  bowlGroup.add(rim);
 
  const base=new THREE.Mesh(
   new THREE.CylinderGeometry(.012,.013,.003,32),
-  ceramicOuter
+  ceramic
  );
  base.position.y=.0015;
  bowlGroup.add(base);
 
- // お茶碗の壁の衝突判定
- for(let k=0;k<5;k++){
-  const y0=BOWL_H*k/5;
-  const y1=BOWL_H*(k+1)/5;
-  const rm=(bowlRadius(y0)+bowlRadius(y1))/2;
+ // 内側・外側・縁に衝突判定
+ for(let k=0;k<6;k++){
+  const y0=BOWL_H*k/6;
+  const y1=BOWL_H*(k+1)/6;
+  const r=(bowlRadius(y0)+bowlRadius(y1))/2;
 
-  for(let j=0;j<40;j++){
-   const a=(j+.5)*Math.PI*2/40;
-   const halfTangential=
-    rm*Math.sin(Math.PI/40)+.0007;
+  for(let j=0;j<48;j++){
+   const a=(j+.5)*2*PI/48;
 
    const b=new CANNON.Body({
     mass:0,
-    material:bowlMaterial
+    material:bowlPhys
    });
 
-   b.addShape(
-    new CANNON.Box(
-     new CANNON.Vec3(
-      .0018,
-      (y1-y0)/2+.0004,
-      halfTangential
-     )
+   b.addShape(new CANNON.Box(
+    new CANNON.Vec3(
+     .0017,
+     (y1-y0)/2+.0004,
+     r*Math.sin(PI/48)+.0007
     )
-   );
+   ));
 
    b.position.set(
-    rm*Math.cos(a),
+    r*Math.cos(a),
     (y0+y1)/2,
-    -targetDistance+rm*Math.sin(a)
+    -targetDistance+r*Math.sin(a)
    );
-   b.quaternion.setFromEuler(0,-a,0);
 
+   b.quaternion.setFromEuler(0,-a,0);
    world.addBody(b);
    bowlBodies.push(b);
   }
@@ -321,11 +387,11 @@ function createBowl(){
 
  const bottom=new CANNON.Body({
   mass:0,
-  material:bowlMaterial
+  material:bowlPhys
  });
- bottom.addShape(
-  new CANNON.Cylinder(.012,.012,.004,24)
- );
+ bottom.addShape(new CANNON.Cylinder(
+  .012,.012,.004,24
+ ));
  bottom.position.set(0,.003,-targetDistance);
  world.addBody(bottom);
  bowlBodies.push(bottom);
@@ -335,336 +401,398 @@ function createBowl(){
 const pod=new THREE.Group();
 scene.add(pod);
 
-const podModel=new THREE.Group();
-pod.add(podModel);
+const podVisual=new THREE.Group();
+pod.add(podVisual);
 
-function podGeometry(){
- const rings=64;
- const sides=32;
- const v=[];
- const idx=[];
+const beanCenters=[-.047,0,.047];
+
+let remaining=3;
+let shellLeft=null;
+let shellRight=null;
+let seam=null;
+let openAmount=0;
+let openingUntil=0;
+
+// さやの形：豆を外に重ねず、表面自体を膨らませる
+function radiusAt(t,count){
+ const end=Math.pow(
+  Math.max(.001,Math.sin(PI*t)),.7
+ );
+
+ let bulge=.008;
+
+ for(let i=0;i<count;i++){
+  const c=.24+i*.26;
+  bulge+=.009*Math.exp(
+   -Math.pow((t-c)/.095,2)
+  );
+ }
+
+ return bulge*end;
+}
+
+function makeHalf(start,end,count){
+ const rings=80;
+ const sides=24;
+ const vertices=[];
+ const indices=[];
 
  for(let i=0;i<=rings;i++){
   const t=i/rings;
-  const x=(t-.5)*.18;
-  const tip=Math.pow(
-   Math.max(.005,Math.sin(Math.PI*t)),
-   .68
-  );
-
-  let swell=0;
-  for(const c of [.24,.5,.76]){
-   swell+=.0075*Math.exp(
-    -Math.pow((t-c)/.092,2)
-   );
-  }
-
-  const r=(.008+swell)*tip;
+  const x=(t-.5)*.19;
+  const r=radiusAt(t,count);
 
   for(let j=0;j<=sides;j++){
-   const a=j/sides*Math.PI*2;
-   v.push(
+   const a=start+(end-start)*j/sides;
+
+   vertices.push(
     x,
-    Math.sin(a)*r*1.2,
-    Math.cos(a)*r*.78
+    Math.sin(a)*r*1.18,
+    Math.cos(a)*r*.84
    );
 
    if(i<rings&&j<sides){
     const n=i*(sides+1)+j;
-    idx.push(
-     n,n+sides+1,n+1,
-     n+1,n+sides+1,n+sides+2
+    indices.push(
+     n,n+1,n+sides+1,
+     n+1,n+sides+2,n+sides+1
     );
    }
   }
  }
 
- const g=new THREE.BufferGeometry();
- g.setAttribute(
+ const geo=new THREE.BufferGeometry();
+ geo.setAttribute(
   'position',
-  new THREE.Float32BufferAttribute(v,3)
+  new THREE.Float32BufferAttribute(
+   vertices,3
+  )
  );
- g.setIndex(idx);
- g.computeVertexNormals();
- return g;
+ geo.setIndex(indices);
+ geo.computeVertexNormals();
+
+ const mesh=new THREE.Mesh(geo,podMat);
+ mesh.castShadow=true;
+ return mesh;
 }
 
-const shell=new THREE.Mesh(
- podGeometry(),
- podGreen
-);
-shell.castShadow=true;
-podModel.add(shell);
-
-const bumps=[];
-for(let i=0;i<3;i++){
- const b=new THREE.Mesh(
-  new THREE.SphereGeometry(.017,28,18),
-  podLight
- );
- b.scale.set(1,.84,.5);
- b.position.set((i-1)*.045,0,-.006);
- b.castShadow=true;
- podModel.add(b);
- bumps.push(b);
-}
-
-// 裏側の合わせ目を強調
-for(const offset of [-.0035,0,.0035]){
+function makeSeam(count){
  const points=[];
 
- for(let i=0;i<=70;i++){
-  const t=.025+.95*i/70;
-  const x=(t-.5)*.18;
-  const end=Math.pow(
-   Math.max(.005,Math.sin(Math.PI*t)),
-   .68
-  );
-  const z=-(
-   .008+.005*Math.sin(3*Math.PI*t)**2
-  )*end*.79;
+ for(let i=0;i<=100;i++){
+  const t=.015+.97*i/100;
+  const x=(t-.5)*.19;
+  const r=radiusAt(t,count);
 
-  points.push(
-   new THREE.Vector3(
-    x,
-    offset,
-    z-.003
-   )
-  );
+  points.push(new THREE.Vector3(
+   x,
+   0,
+   -r*.84-.0015
+  ));
  }
 
  const curve=new THREE.CatmullRomCurve3(points);
- const line=new THREE.Mesh(
+
+ const mesh=new THREE.Mesh(
   new THREE.TubeGeometry(
-   curve,
-   90,
-   offset===0?.0032:.0012,
-   6,
-   false
+   curve,120,.0019,8,false
   ),
-  offset===0?seamMat:podLight
+  seamMat
  );
- podModel.add(line);
+ return mesh;
 }
 
-// 射出方向マーク
-const direction=new THREE.Group();
-pod.add(direction);
+function rebuildPod(){
+ if(shellLeft){
+  podVisual.remove(shellLeft);
+  shellLeft.geometry.dispose();
+ }
+ if(shellRight){
+  podVisual.remove(shellRight);
+  shellRight.geometry.dispose();
+ }
+ if(seam){
+  podVisual.remove(seam);
+  seam.geometry.dispose();
+ }
 
-const shaft=new THREE.Mesh(
- new THREE.CylinderGeometry(.0012,.0012,.065,8),
- podDark
-);
-shaft.rotation.x=Math.PI/2;
-shaft.position.z=-.05;
-direction.add(shaft);
+ shellLeft=makeHalf(0,PI,remaining);
+ shellRight=makeHalf(PI,2*PI,remaining);
+ seam=makeSeam(remaining);
 
-const tip=new THREE.Mesh(
- new THREE.ConeGeometry(.004,.012,10),
- podDark
-);
-tip.rotation.x=-Math.PI/2;
-tip.position.z=-.09;
-direction.add(tip);
+ podVisual.add(shellLeft,shellRight,seam);
+
+ shellLeft.position.y=0;
+ shellRight.position.y=0;
+ seam.visible=true;
+}
 
 const stem=new THREE.Mesh(
- new THREE.CylinderGeometry(.002,.003,.018,8),
+ new THREE.CylinderGeometry(
+  .0025,.0035,.018,9
+ ),
  podDark
 );
-stem.rotation.z=Math.PI/2;
-stem.position.x=-.095;
-podModel.add(stem);
+stem.rotation.z=PI/2;
+stem.position.x=-.102;
+podVisual.add(stem);
 
-// ゲーム状態
-let yaw=0;
-let pitch=32;
+// 小さなさや先端
+const tip=new THREE.Mesh(
+ new THREE.ConeGeometry(.004,.018,10),
+ podDark
+);
+tip.rotation.z=-PI/2;
+tip.position.x=.103;
+podVisual.add(tip);
+
+// 状態
+let mode='menu';
 let round=0;
 let records=[];
-let mode='menu';
-let bean=null;
+let yaw=0;
+let pitch=28;
 let body=null;
-let shotAt=0;
-let still=0;
-let charge=0;
+let bean=null;
+let shotTime=0;
+let stillTime=0;
+let groundHits=0;
+let hasGrounded=false;
+let launchCharge=0;
 let pinch=null;
+let lastShotPosition=null;
 
 const pointers=new Map();
+const UP=new THREE.Vector3(0,1,0);
+const FORWARD=new THREE.Vector3(0,0,-1);
+const launchOrigin=new THREE.Vector3();
 
-function updatePod(){
+function updateAim(){
  pod.position.set(0,.13,.19);
+
  pod.rotation.order='YXZ';
- pod.rotation.y=yaw*Math.PI/180;
- pod.rotation.x=-pitch*Math.PI/180;
+ pod.rotation.y=yaw*PI/180;
+ pod.rotation.x=pitch*PI/180;
 
- bumps.forEach((b,i)=>{
-  b.visible=i>=round;
- });
+ // さやの合わせ目を向けた方向へ飛ぶ
+ pod.updateMatrixWorld(true);
 
- shell.scale.y=1-charge*.23;
- shell.scale.z=1-charge*.25;
+ shellLeft.position.y=openAmount;
+ shellRight.position.y=-openAmount;
 
- bumps.forEach(b=>{
-  b.scale.z=.5*(1-charge*.5);
- });
-
- direction.visible=mode==='aim';
+ seam.visible=openAmount<.002;
 }
 
-function resetShot(){
+function updateCounter(){
+ $('beans').textContent=
+  Array(3).fill(0).map(
+   (_,i)=>i<round?'○':'●'
+  ).join(' ');
+}
+
+function clearBean(){
  if(bean){
   scene.remove(bean);
+  bean.geometry.dispose();
   bean=null;
  }
+
  if(body){
   world.removeBody(body);
   body=null;
  }
+}
+
+function resetAim(){
+ clearBean();
 
  mode='aim';
- charge=0;
+ stillTime=0;
+ groundHits=0;
+ hasGrounded=false;
+ launchCharge=0;
+ openAmount=0;
  pinch=null;
- still=0;
  pointers.clear();
 
- pod.visible=true;
- updatePod();
+ remaining=3-round;
+ rebuildPod();
 
- $('beans').textContent=
-  '● '.repeat(3-round)+
-  '○ '.repeat(round);
+ pod.visible=true;
+ updateAim();
+ updateCounter();
 
  $('bottom').textContent=
   records.length
-  ?records.map(n=>n+' cm').join('  /  ')
+  ?records.map(n=>n+' cm').join(' / ')
   :'';
 
  camera.position.set(0,.34,.68);
- camera.lookAt(0,.13,-.36);
+ camera.lookAt(0,.13,-.35);
 }
 
-function start(){
- targetDistance=
-  (50+Math.floor(Math.random()*51))/100;
-
+function startGame(){
  round=0;
  records=[];
  yaw=0;
- pitch=32;
+ pitch=28;
 
- createBowl();
+ targetDistance=
+  (50+Math.floor(Math.random()*51))/100;
 
  $('distance').textContent=
   Math.round(targetDistance*100)+' cm';
 
+ makeBowl();
+
+ $('intro').classList.add('hidden');
+ $('result').classList.add('hidden');
  $('screen').classList.add('hidden');
- resetShot();
+
+ resetAim();
 }
 
-function launch(strength){
+function launch(strength=1){
  if(mode!=='aim')return;
 
  mode='flight';
- pod.visible=false;
+ pointers.clear();
+ pinch=null;
 
- const speed=
-  1.25+
-  Math.max(.08,Math.min(1,strength))*2.1;
+ // 発射方向と、さやの合わせ目の向きを完全に共通化
+ pod.updateMatrixWorld(true);
+
+ const direction=FORWARD.clone()
+  .applyQuaternion(pod.quaternion)
+  .normalize();
+
+ // さやの合わせ目、最後に残っている豆の位置
+ const beanIndex=3-remaining;
+ const localX=beanCenters[beanIndex];
+
+ launchOrigin.set(
+  localX,0,-.025
+ );
+ pod.localToWorld(launchOrigin);
+
+ const speed=1.5+clamp(strength,0,1)*1.1;
 
  bean=new THREE.Mesh(
-  new THREE.SphereGeometry(BEAN_R,24,16),
-  beanGreen
+  new THREE.SphereGeometry(BEAN_R,20,14),
+  beanMat
  );
- bean.scale.set(1.1,.9,.95);
+ bean.scale.set(1.12,.9,.96);
  bean.castShadow=true;
+ bean.position.copy(launchOrigin);
  scene.add(bean);
 
  body=new CANNON.Body({
   mass:.0012,
-  material:beanMaterial,
+  material:beanPhys,
   shape:new CANNON.Sphere(BEAN_R),
-  linearDamping:.82,
-  angularDamping:.995,
+  linearDamping:.07,
+  angularDamping:.65,
   allowSleep:true,
-  sleepSpeedLimit:.06,
-  sleepTimeLimit:.5
+  sleepSpeedLimit:.055,
+  sleepTimeLimit:.55
  });
 
- body.position.set(0,.13,.10);
-
- const y=yaw*Math.PI/180;
- const p=pitch*Math.PI/180;
-
- body.velocity.set(
-  Math.sin(y)*Math.cos(p)*speed,
-  Math.sin(p)*speed,
-  -Math.cos(y)*Math.cos(p)*speed
+ body.position.set(
+  launchOrigin.x,
+  launchOrigin.y,
+  launchOrigin.z
  );
 
- body.angularVelocity.set(1.5,2,1);
+ body.velocity.set(
+  direction.x*speed,
+  direction.y*speed,
+  direction.z*speed
+ );
+
+ body.angularVelocity.set(1,2,.6);
+
+ body.addEventListener('collide',event=>{
+  if(event.body===ground){
+   groundHits++;
+   hasGrounded=true;
+  }
+ });
+
  world.addBody(body);
 
- shotAt=performance.now();
- still=0;
+ // さやが開くアニメーション
+ openAmount=.008;
+ openingUntil=performance.now()+220;
+ updateAim();
+
+ shotTime=performance.now();
+ stillTime=0;
 }
 
-function toast(text){
- $('notice').textContent=text;
+function toast(message){
+ $('notice').textContent=message;
  $('notice').classList.add('show');
 
  setTimeout(()=>{
   $('notice').classList.remove('show');
- },1250);
+ },1200);
 }
 
-function finish(){
+function finishShot(){
  if(mode!=='flight'||!body)return;
 
  mode='wait';
 
  const x=body.position.x;
  const z=body.position.z+targetDistance;
- const r=Math.hypot(x,z);
+ const radius=Math.hypot(x,z);
 
- const inside=
-  r<.018&&
-  body.position.y<BOWL_H+.003;
+ const inBowl=
+  radius<.017&&
+  body.position.y<BOWL_H+.004;
 
- const cm=inside?0:Math.round(r*100);
+ const cm=inBowl
+  ?0
+  :Math.round(radius*100);
+
  records.push(cm);
-
- toast(inside?'IN!':cm+' cm');
+ toast(inBowl?'IN!':cm+' cm');
 
  $('bottom').textContent=
-  records.map(n=>n+' cm').join('  /  ');
+  records.map(n=>n+' cm').join(' / ');
 
  setTimeout(()=>{
   round++;
-  if(round>=3){
-   showResults();
+
+  if(round===3){
+   showResult();
   }else{
-   resetShot();
+   resetAim();
   }
- },1600);
+ },1300);
 }
 
-function showResults(){
+function showResult(){
  mode='end';
 
  const sum=records.reduce((a,b)=>a+b,0);
  $('total').textContent=sum+' cm';
 
- $('details').innerHTML=
-  records.map(
-   (n,i)=>`BEAN ${i+1}　${n} cm`
-  ).join('<br>');
+ $('details').replaceChildren();
 
- $('intro').classList.add('hidden');
+ records.forEach((n,i)=>{
+  const line=document.createElement('div');
+  line.textContent=
+   `BEAN ${i+1}　${n} cm`;
+  $('details').appendChild(line);
+ });
+
  $('result').classList.remove('hidden');
  $('screen').classList.remove('hidden');
 }
 
-$('start').onclick=start;
-$('retry').onclick=start;
+$('start').onclick=startGame;
+$('retry').onclick=startGame;
 
 $('home').onclick=()=>{
  location.href='../../';
@@ -674,12 +802,12 @@ $('share').onclick=()=>{
  const sum=records.reduce((a,b)=>a+b,0);
 
  const text=
-  `🫛 枝豆飛ばし｜IDLE-LAB\n`+
+  '🫛 枝豆飛ばし｜IDLE-LAB\n'+
   records.map(
    (n,i)=>`${i+1}粒目：${n}cm`
   ).join('\n')+
   `\n合計 ${sum}cm\n`+
-  `#IDLELAB #枝豆飛ばし`;
+  '#IDLELAB #枝豆飛ばし';
 
  window.open(
   'https://twitter.com/intent/tweet?'+
@@ -692,7 +820,7 @@ $('share').onclick=()=>{
  );
 };
 
-// スマホ操作
+// タッチ操作
 const canvas=renderer.domElement;
 
 canvas.addEventListener('pointerdown',e=>{
@@ -713,15 +841,15 @@ canvas.addEventListener('pointerdown',e=>{
     p[0].x-p[1].x,
     p[0].y-p[1].y
    ),
-   travel:0,
-   started:performance.now()
+   amount:0
   };
-  charge=0;
  }
 });
 
 canvas.addEventListener('pointermove',e=>{
- if(mode!=='aim'||!pointers.has(e.pointerId))return;
+ if(mode!=='aim'||!pointers.has(e.pointerId)){
+  return;
+ }
 
  const old=pointers.get(e.pointerId);
 
@@ -731,19 +859,15 @@ canvas.addEventListener('pointermove',e=>{
  });
 
  if(pointers.size===1){
-  yaw=Math.max(
-   -55,
-   Math.min(
-    55,
-    yaw+(e.clientX-old.x)*.22
-   )
-  );
+  yaw+=(e.clientX-old.x)*.23;
 
-pitch += (old.y-e.clientY)*.24;
+  // 上下は角度制限なし
+  pitch+=(old.y-e.clientY)*.24;
 
-  updatePod();
+  updateAim();
+ }
 
- }else if(pointers.size===2&&pinch){
+ if(pointers.size===2&&pinch){
   const p=[...pointers.values()];
 
   const d=Math.hypot(
@@ -751,175 +875,156 @@ pitch += (old.y-e.clientY)*.24;
    p[0].y-p[1].y
   );
 
-  pinch.travel=Math.max(
-   pinch.travel,
+  pinch.amount=Math.max(
+   pinch.amount,
    pinch.initial-d
   );
 
-  charge=Math.max(
-   0,
-   Math.min(1,pinch.travel/90)
+  launchCharge=clamp(
+   pinch.amount/85,0,1
   );
 
-  updatePod();
+  openAmount=launchCharge*.003;
+  updateAim();
 
-  if(charge>.36&&(d<55||charge>.94)){
-   const elapsed=Math.max(
-    .07,
-    (performance.now()-pinch.started)/1000
-   );
-
-   launch(
-    Math.min(
-     1,
-     charge*.6+(charge/elapsed)*.13
-    )
-   );
+  if(launchCharge>.65){
+   launch(launchCharge);
   }
  }
 });
 
-function release(e){
+function releasePointer(e){
  pointers.delete(e.pointerId);
 
  if(mode==='aim'&&pinch&&pointers.size<2){
-  if(charge>.15){
-   const elapsed=Math.max(
-    .07,
-    (performance.now()-pinch.started)/1000
-   );
-
-   launch(
-    Math.min(
-     1,
-     charge*.6+(charge/elapsed)*.12
-    )
-   );
+  if(launchCharge>.22){
+   launch(launchCharge);
+  }else{
+   openAmount=0;
+   updateAim();
   }
 
   pinch=null;
-  charge=0;
-  updatePod();
+  launchCharge=0;
  }
 }
 
-canvas.addEventListener('pointerup',release);
-canvas.addEventListener('pointercancel',release);
+canvas.addEventListener(
+ 'pointerup',releasePointer
+);
+canvas.addEventListener(
+ 'pointercancel',releasePointer
+);
 
 // PC操作
-let keyStart=0;
-let pcDragging=false;
-let pcX=0;
-let pcY=0;
-
-canvas.addEventListener('mousedown',e=>{
- if(mode==='aim'){
-  pcDragging=true;
-  pcX=e.clientX;
-  pcY=e.clientY;
- }
-});
-
-window.addEventListener('mousemove',e=>{
- if(!pcDragging||mode!=='aim')return;
-
- yaw=Math.max(
-  -55,
-  Math.min(
-   55,
-   yaw+(e.clientX-pcX)*.22
-  )
- );
-
- pitch=Math.max(
-  6,
-  Math.min(
-   76,
-   pitch+(pcY-e.clientY)*.18
-  )
- );
-
- pcX=e.clientX;
- pcY=e.clientY;
- updatePod();
-});
-
-window.addEventListener('mouseup',()=>{
- pcDragging=false;
-});
+let spaceStart=0;
+const keys=new Set();
 
 window.addEventListener('keydown',e=>{
  if(mode!=='aim')return;
 
- if(e.code==='Space'){
+ if([
+  'ArrowUp','ArrowDown',
+  'ArrowLeft','ArrowRight','Space'
+ ].includes(e.code)){
   e.preventDefault();
-  if(!keyStart){
-   keyStart=performance.now();
-  }
+ }
+
+ keys.add(e.code);
+
+ if(e.code==='Space'&&!spaceStart){
+  spaceStart=performance.now();
  }
 });
 
 window.addEventListener('keyup',e=>{
- if(e.code==='Space'&&keyStart){
-  const elapsed=performance.now()-keyStart;
-  keyStart=0;
+ keys.delete(e.code);
 
-  launch(
-   Math.min(
-    1,
-    Math.max(.08,elapsed/1250)
-   )
-  );
+ if(e.code==='Space'&&spaceStart){
+  const held=performance.now()-spaceStart;
+  spaceStart=0;
+
+  launch(clamp(held/650,.25,1));
  }
 });
 
-// 物理演算・描画
+// PCのマウスドラッグはpointermoveと共通
+// 矢印キーでも照準を動かせる
+
 const clock=new THREE.Clock();
 
 function animate(){
  requestAnimationFrame(animate);
 
- const dt=Math.min(clock.getDelta(),.04);
+ const dt=Math.min(clock.getDelta(),.035);
+
+ if(mode==='aim'){
+  const turn=80*dt;
+
+  if(keys.has('ArrowLeft'))yaw-=turn;
+  if(keys.has('ArrowRight'))yaw+=turn;
+  if(keys.has('ArrowUp'))pitch+=turn;
+  if(keys.has('ArrowDown'))pitch-=turn;
+
+  updateAim();
+
+  camera.position.lerp(
+   new THREE.Vector3(0,.34,.68),
+   Math.min(1,dt*5)
+  );
+  camera.lookAt(0,.13,-.35);
+ }
 
  if(mode==='flight'&&body){
-  world.step(1/120,dt,5);
-  // 床に落ちた豆の転がりを抑制
-if (body) {
-  const onGround = body.position.y <= BEAN_R + .003;
+  world.step(1/120,dt,6);
 
-  if (onGround) {
-    const damping = Math.pow(0.12, dt * 12);
+  const p=body.position;
 
-    body.velocity.x *= damping;
-    body.velocity.z *= damping;
+  // 跳ねる間は速度を残し、
+  // 着地後の転がりだけを抑える
+  const onFloor=
+   p.y<=BEAN_R+.0025;
 
-    body.angularVelocity.x *= damping;
-    body.angularVelocity.y *= damping;
-    body.angularVelocity.z *= damping;
+  const verticalSpeed=
+   Math.abs(body.velocity.y);
 
-    // 十分遅くなったら完全停止
-    const horizontalSpeed = Math.hypot(
-      body.velocity.x,
-      body.velocity.z
-    );
+  if(hasGrounded&&onFloor){
+   // 横方向の滑り・転がりを減速
+   const factor=Math.exp(-5*dt);
 
-    if (horizontalSpeed < .045) {
-      body.velocity.x = 0;
-      body.velocity.z = 0;
-      body.angularVelocity.set(0, 0, 0);
-    }
+   body.velocity.x*=factor;
+   body.velocity.z*=factor;
+
+   body.angularVelocity.x*=Math.exp(-9*dt);
+   body.angularVelocity.y*=Math.exp(-9*dt);
+   body.angularVelocity.z*=Math.exp(-9*dt);
+
+   // 跳ねが弱くなった後だけ強く止める
+   if(verticalSpeed<.35){
+    const slow=Math.exp(-13*dt);
+    body.velocity.x*=slow;
+    body.velocity.z*=slow;
+   }
+
+   const horizontal=Math.hypot(
+    body.velocity.x,
+    body.velocity.z
+   );
+
+   if(horizontal<.025&&verticalSpeed<.12){
+    body.velocity.x=0;
+    body.velocity.z=0;
+    body.angularVelocity.set(0,0,0);
+   }
   }
-}
 
   bean.position.copy(body.position);
   bean.quaternion.copy(body.quaternion);
 
-  const p=body.position;
-
   camera.position.lerp(
    new THREE.Vector3(
-    p.x*.8,
-    p.y+.16,
+    p.x*.65,
+    Math.max(.17,p.y+.16),
     p.z+.34
    ),
    Math.min(1,dt*4)
@@ -927,32 +1032,35 @@ if (body) {
 
   camera.lookAt(
    p.x,
-   p.y,
-   p.z-.09
+   Math.max(.015,p.y),
+   p.z-.08
   );
 
+  // 開いたさやは残る。
+  // 開閉後、飛んだ部分の膨らみを減らす
+  if(openingUntil&&
+     performance.now()>openingUntil){
+   openingUntil=0;
+   openAmount=0;
+
+   remaining=Math.max(0,remaining-1);
+   rebuildPod();
+   updateAim();
+  }
+
+  const speed=body.velocity.length();
   const elapsed=
-   (performance.now()-shotAt)/1000;
+   (performance.now()-shotTime)/1000;
 
-  if(
-   body.velocity.length()<.075&&
-   p.y<.06
-  ){
-   still+=dt;
+  if(speed<.075&&p.y<.05){
+   stillTime+=dt;
   }else{
-   still=0;
+   stillTime=0;
   }
 
-  if(still>.65||elapsed>8){
-   finish();
+  if(stillTime>.65||elapsed>8){
+   finishShot();
   }
-
- }else if(mode==='aim'){
-  camera.position.lerp(
-   new THREE.Vector3(0,.34,.68),
-   Math.min(1,dt*5)
-  );
-  camera.lookAt(0,.13,-.36);
  }
 
  renderer.render(scene,camera);
@@ -964,7 +1072,8 @@ window.addEventListener('resize',()=>{
  renderer.setSize(innerWidth,innerHeight);
 });
 
-updatePod();
+rebuildPod();
+updateAim();
 $('loading').remove();
 animate();
 </script>
