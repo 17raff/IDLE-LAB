@@ -1,527 +1,810 @@
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#111811">
 <title>枝豆飛ばし | IDLE-LAB</title>
 <style>
 *{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111811;color:#f2f5eb;font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif}
-#game{position:fixed;inset:0;touch-action:none}
+html,body{margin:0;height:100%;overflow:hidden;background:#171513;font-family:system-ui,sans-serif;color:#f4f0e7}
 canvas{display:block;touch-action:none}
-#hud{position:fixed;inset:0;pointer-events:none}
-.top{position:absolute;top:0;left:0;right:0;padding:calc(env(safe-area-inset-top) + 14px) 18px 12px;background:linear-gradient(#101810dd,transparent);display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
-.logo{font-size:12px;font-weight:900;letter-spacing:2px;color:#c6f36b}
-.small{font-size:11px;color:#d2dfc7}
-.big{font-size:22px;font-weight:900}
-.right{text-align:right}
-#hint{position:absolute;left:50%;top:22%;transform:translateX(-50%);background:#101810c9;border:1px solid #a6cb78aa;border-radius:16px;padding:11px 15px;text-align:center;font-size:13px;line-height:1.6;width:max-content;max-width:90vw}
-#bottom{position:absolute;bottom:calc(env(safe-area-inset-bottom) + 16px);left:16px;right:16px;display:flex;flex-direction:column;align-items:center;gap:10px}
-#meter{width:min(340px,90vw);height:11px;border-radius:99px;background:#ffffff30;overflow:hidden}
-#fill{width:0%;height:100%;background:linear-gradient(90deg,#c6f36b,#ffce54,#ff7651);transition:width .04s}
-#powerText{font-size:12px;color:#e4e9d9;text-shadow:0 2px 4px #000}
-#aimControls{pointer-events:auto;display:flex;gap:8px;align-items:center;justify-content:center}
-#aimControls button{border:1px solid #c6f36b77;background:#182318d9;color:#eff6e6;border-radius:12px;padding:10px 13px;font-size:16px;font-weight:800;min-width:45px;touch-action:manipulation}
-#aimControls span{font-size:11px;text-align:center;min-width:76px}
-#shootTip{font-size:12px;background:#111b11c9;border:1px solid #c6f36b66;padding:9px 14px;border-radius:12px;text-align:center}
-button{cursor:pointer;font-family:inherit}
-#overlay{position:fixed;inset:0;background:#0a100ce9;display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}
-.panel{width:min(430px,100%);max-height:90vh;overflow:auto;border:1px solid #c6f36b44;border-radius:25px;background:#19231b;padding:27px 23px;text-align:center;box-shadow:0 25px 80px #0008}
-.kicker{font-size:12px;letter-spacing:3px;color:#c6f36b;font-weight:900}
-h1{font-size:clamp(32px,8vw,48px);margin:12px 0}
-p{line-height:1.8;font-size:14px;color:#cbd5c5}
-.primary{width:100%;background:#c6f36b;color:#17200e;border:0;border-radius:13px;padding:15px;font-size:16px;font-weight:900;margin-top:12px}
-.secondary{width:100%;background:transparent;color:#f2f5eb;border:1px solid #65765e;border-radius:13px;padding:13px;margin-top:9px}
-#results{font-size:14px;line-height:2;text-align:left;margin:15px auto;max-width:280px}
-#score{font-size:48px;font-weight:900;color:#c6f36b}
+#app{position:fixed;inset:0}
+#ui{pointer-events:none;position:fixed;inset:0}
+header{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;padding:calc(env(safe-area-inset-top) + 19px) 21px;background:linear-gradient(#16130fc9,transparent);font-size:12px;letter-spacing:2px;font-weight:800}
+.muted{opacity:.6}
+#count{font-size:19px;letter-spacing:5px;color:#c6f36b}
+#scoreline{position:absolute;bottom:calc(env(safe-area-inset-bottom) + 25px);width:100%;text-align:center;font-size:13px;letter-spacing:2px;text-shadow:0 2px 8px #000}
+#screen{position:fixed;inset:0;background:#131411dd;display:grid;place-items:center;padding:22px;z-index:3}
+.panel{width:min(390px,100%);background:#22231e;border:1px solid #5b634b;border-radius:22px;padding:30px;text-align:center;box-shadow:0 25px 80px #0008}
+.panel h1{font-size:43px;margin:10px 0}
+.panel p{font-size:13px;line-height:1.9;color:#c3c7b9}
+.panel button{width:100%;padding:15px;margin-top:20px;border:0;border-radius:10px;background:#c6f36b;color:#18200e;font-weight:900;font-size:16px;cursor:pointer}
+.panel button.alt{background:transparent;color:#f4f0e7;border:1px solid #72776b;margin-top:9px}
 .hidden{display:none!important}
-#toast{position:absolute;top:42%;left:50%;transform:translate(-50%,-50%);background:#142014eb;border:1px solid #c6f36b;border-radius:18px;padding:15px 25px;font-weight:900;font-size:24px;white-space:nowrap;opacity:0;transition:opacity .25s}
-#toast.show{opacity:1}
-#loading{position:fixed;inset:0;z-index:30;background:#101810;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;color:#c6f36b;font-weight:800}
+#resultNumber{font-size:45px;color:#c6f36b;font-weight:900}
+#results{line-height:2.2;font-size:14px}
+#notice{position:absolute;top:36%;width:100%;text-align:center;font-size:33px;font-weight:900;text-shadow:0 3px 15px #000;opacity:0;transition:opacity .25s}
+#notice.on{opacity:1}
+#load{position:fixed;inset:0;display:grid;place-items:center;background:#171513;z-index:9}
 </style>
 </head>
 <body>
-<div id="loading">🫛<br>枝豆を準備しています...</div>
-<div id="game"></div>
-<div id="hud">
- <div class="top">
-  <div><div class="logo">IDLE-LAB / 001</div><div class="small" id="round">1 / 3 粒</div></div>
-  <div class="right"><div class="small">TARGET DISTANCE</div><div class="big" id="target">4.0 m</div></div>
- </div>
- <div id="hint">1本指でドラッグして左右を狙う<br>上下角度は下のボタンで調整</div>
- <div id="toast"></div>
- <div id="bottom">
-  <div id="powerText">豆の膨らみを2本指でつまもう！</div>
-  <div id="meter"><div id="fill"></div></div>
-  <div id="aimControls">
-   <button id="left">↶</button>
-   <button id="down">−</button>
-   <span id="angles">左右 0°<br>仰角 35°</span>
-   <button id="up">＋</button>
-   <button id="right">↷</button>
-  </div>
-  <div id="shootTip">🫛 2本指を広げて置き、素早く閉じると発射！</div>
- </div>
+<div id="app"></div>
+<div id="ui">
+<header>
+<div>IDLE-LAB <span class="muted">/ 001</span></div>
+<div id="count">● ● ●</div>
+</header>
+<div id="notice"></div>
+<div id="scoreline"></div>
 </div>
-<div id="overlay">
- <div class="panel" id="startPanel">
-  <div class="kicker">IDLE-LAB / GAME 001</div>
-  <h1>🫛 枝豆飛ばし</h1>
-  <p>枝豆のさやを表裏からギュッ！<br>飛び出した豆を、遠くのお茶碗に入れよう。</p>
-  <p>3粒の停止位置からお茶碗までの距離を合計。<br><b>小さいほど高得点！</b></p>
-  <p>スマホは2本指でつまんで発射。<br>PCではスペースキー長押し→離して発射できるよ。</p>
-  <button class="primary" id="startBtn">ゲームスタート！</button>
- </div>
- <div class="panel hidden" id="resultPanel">
-  <div class="kicker">GAME OVER</div>
-  <h1>結果発表</h1>
-  <div id="score">0 cm</div>
-  <div id="rank"></div>
-  <div id="results"></div>
-  <button class="primary" id="retryBtn">もう一度遊ぶ</button>
-  <button class="secondary" id="shareBtn">𝕏 結果をシェア</button>
-  <button class="secondary" id="homeBtn">IDLE-LABに戻る</button>
- </div>
+<div id="screen">
+<div class="panel" id="intro">
+<div style="letter-spacing:4px;color:#c6f36b;font-size:12px">GAME 001</div>
+<h1>枝豆飛ばし</h1>
+<p>3粒の枝豆を、遠くの小さなお茶碗へ。<br>1本指で狙い、2本指でつまんで飛ばす。</p>
+<button id="start">START</button>
 </div>
+<div class="panel hidden" id="end">
+<div style="letter-spacing:4px;color:#c6f36b;font-size:12px">RESULT</div>
+<h1>枝豆飛ばし</h1>
+<div id="resultNumber"></div>
+<div id="results"></div>
+<button id="again">RETRY</button>
+<button class="alt" id="share">𝕏 SHARE</button>
+<button class="alt" id="home">BACK TO IDLE-LAB</button>
+</div>
+</div>
+<div id="load">🫛</div>
 
 <script type="module">
-import * as THREE from "https://esm.sh/three@0.180.0";
-import * as CANNON from "https://esm.sh/cannon-es@0.20.0";
+import * as THREE from 'https://esm.sh/three@0.180.0';
+import * as CANNON from 'https://esm.sh/cannon-es@0.20.0';
 
 const $=id=>document.getElementById(id);
 const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x849a79);
-scene.fog=new THREE.Fog(0x849a79,7,24);
+scene.background=new THREE.Color(0x302b27);
+scene.fog=new THREE.Fog(0x302b27,7,19);
 
-const camera=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,.01,60);
-const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:"high-performance"});
-renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));
+const camera=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,.01,80);
+const renderer=new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(innerWidth,innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.8));
 renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputColorSpace=THREE.SRGBColorSpace;
-$("game").appendChild(renderer.domElement);
+$('app').appendChild(renderer.domElement);
 
-scene.add(new THREE.HemisphereLight(0xffffff,0x566444,2.1));
-const sun=new THREE.DirectionalLight(0xfff4d5,2.5);
-sun.position.set(-3,7,3);
-sun.castShadow=true;
-sun.shadow.mapSize.set(1024,1024);
-sun.shadow.camera.left=-8;
-sun.shadow.camera.right=8;
-sun.shadow.camera.top=8;
-sun.shadow.camera.bottom=-8;
-scene.add(sun);
+scene.add(new THREE.HemisphereLight(0xffead2,0x48453b,2));
+
+const light=new THREE.DirectionalLight(0xffe2b1,3);
+light.position.set(-2,5,2);
+light.castShadow=true;
+light.shadow.mapSize.set(1024,1024);
+light.shadow.camera.left=-7;
+light.shadow.camera.right=7;
+light.shadow.camera.top=7;
+light.shadow.camera.bottom=-7;
+scene.add(light);
 
 const world=new CANNON.World({gravity:new CANNON.Vec3(0,-9.82,0)});
 world.allowSleep=true;
-world.solver.iterations=12;
+world.solver.iterations=14;
 world.broadphase=new CANNON.SAPBroadphase(world);
-const floorMat=new CANNON.Material("floor");
-const beanMat=new CANNON.Material("bean");
-const bowlMat=new CANNON.Material("bowl");
-world.addContactMaterial(new CANNON.ContactMaterial(floorMat,beanMat,{friction:.48,restitution:.38}));
-world.addContactMaterial(new CANNON.ContactMaterial(bowlMat,beanMat,{friction:.32,restitution:.36}));
 
-function mesh(geo,mat,parent=scene){
- const m=new THREE.Mesh(geo,mat);parent.add(m);return m;
-}
-const green=new THREE.MeshStandardMaterial({color:0x80b34d,roughness:.78});
-const lightGreen=new THREE.MeshStandardMaterial({color:0xa6d56d,roughness:.65});
-const seamMat=new THREE.MeshStandardMaterial({color:0x3d6e2f,roughness:.9});
-const bowlOutside=new THREE.MeshStandardMaterial({color:0xe8e6dc,roughness:.36,side:THREE.DoubleSide});
-const bowlInside=new THREE.MeshStandardMaterial({color:0xc8ded9,roughness:.4,side:THREE.DoubleSide});
+const floorMat=new CANNON.Material('wood');
+const beanMat=new CANNON.Material('bean');
+const ceramic=new CANNON.Material('ceramic');
 
-const ground=mesh(new THREE.PlaneGeometry(100,100),new THREE.MeshStandardMaterial({color:0x697b58,roughness:1}));
-ground.rotation.x=-Math.PI/2;
-ground.receiveShadow=true;
-const groundBody=new CANNON.Body({mass:0,material:floorMat,shape:new CANNON.Plane()});
+world.addContactMaterial(new CANNON.ContactMaterial(floorMat,beanMat,{
+ friction:.53,restitution:.34
+}));
+world.addContactMaterial(new CANNON.ContactMaterial(ceramic,beanMat,{
+ friction:.34,restitution:.35
+}));
+
+const mat=(color,roughness=.7,extra={})=>
+ new THREE.MeshStandardMaterial({color,roughness,...extra});
+
+const wood=mat(0x8a6548,.9);
+const seam=mat(0x487d32,.8);
+const podMat=mat(0x70a744,.72);
+const podLight=mat(0x8bc657,.68);
+const podDark=mat(0x507f34,.85);
+const beanGreen=mat(0xa5cb6a,.6);
+const cream=mat(0xe8e4d8,.35,{side:THREE.DoubleSide});
+const inner=mat(0xcbd5cf,.37,{side:THREE.DoubleSide});
+
+// 木製床
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(100,100),wood);
+floor.rotation.x=-Math.PI/2;
+floor.receiveShadow=true;
+scene.add(floor);
+
+const groundBody=new CANNON.Body({
+ mass:0,
+ material:floorMat,
+ shape:new CANNON.Plane()
+});
 groundBody.quaternion.setFromEuler(-Math.PI/2,0,0);
 world.addBody(groundBody);
 
-// 床の木目・奥行き目印
-const lineMat=new THREE.MeshBasicMaterial({color:0x82926d,transparent:true,opacity:.35});
-for(let i=-10;i<=10;i++){
- const l=mesh(new THREE.BoxGeometry(.008,.002,22),lineMat);
- l.position.set(i*.55,.002,-5);
-}
-for(let i=0;i<16;i++){
- const l=mesh(new THREE.BoxGeometry(12,.002,.008),lineMat);
- l.position.set(0,.003,-i*.7);
+// 床板の継ぎ目と木目
+const boardLine=new THREE.MeshBasicMaterial({
+ color:0x4b3527,transparent:true,opacity:.28
+});
+
+for(let i=-15;i<=15;i++){
+ const m=new THREE.Mesh(
+  new THREE.BoxGeometry(.006,.001,24),boardLine
+ );
+ m.position.set(i*.42,.001,-5);
+ scene.add(m);
 }
 
-// 単位はメートル。お茶碗：口径8cm、高さ4cm
-const BOWL_RADIUS=.04;
-const BOWL_HEIGHT=.04;
-const BEAN_RADIUS=.008;
-let targetDistance=4;
-let bowlGroup=null;
+for(let i=0;i<90;i++){
+ const m=new THREE.Mesh(
+  new THREE.BoxGeometry(.003,.001,.2+Math.random()*.8),
+  new THREE.MeshBasicMaterial({
+   color:0xb68b65,transparent:true,opacity:.07
+  })
+ );
+ m.position.set((Math.random()-.5)*10,.002,-Math.random()*12);
+ scene.add(m);
+}
+
+// 室内の壁
+const wall=new THREE.Mesh(
+ new THREE.PlaneGeometry(24,10),
+ mat(0x70675e,.95)
+);
+wall.position.set(0,5,-8);
+scene.add(wall);
+
+const trim=new THREE.Mesh(
+ new THREE.BoxGeometry(24,.11,.09),
+ mat(0x443a32)
+);
+trim.position.set(0,.06,-7.95);
+scene.add(trim);
+
+// お茶碗
+let bowl=null;
 let bowlBodies=[];
+let distance=4;
 
-function bowlRadius(y){
- const t=Math.max(0,Math.min(1,y/BOWL_HEIGHT));
- return .018+(.04-.018)*Math.pow(t,.85);
+function radiusAt(y){
+ return .018+.022*Math.pow(
+  Math.max(0,Math.min(1,y/.04)),.82
+ );
 }
-function createBowl(distance){
- if(bowlGroup)scene.remove(bowlGroup);
- for(const b of bowlBodies)world.removeBody(b);
+
+function buildBowl(){
+ if(bowl)scene.remove(bowl);
+ bowlBodies.forEach(b=>world.removeBody(b));
  bowlBodies=[];
- bowlGroup=new THREE.Group();
- bowlGroup.position.z=-distance;
- scene.add(bowlGroup);
+
+ bowl=new THREE.Group();
+ bowl.position.z=-distance;
+ scene.add(bowl);
 
  const profile=[];
- for(let i=0;i<=20;i++){
-  const y=BOWL_HEIGHT*i/20;
-  profile.push(new THREE.Vector2(bowlRadius(y),y));
+ for(let i=0;i<=24;i++){
+  const y=.04*i/24;
+  profile.push(new THREE.Vector2(radiusAt(y),y));
  }
- const outer=mesh(new THREE.LatheGeometry(profile,48),bowlOutside,bowlGroup);
- outer.castShadow=true;outer.receiveShadow=true;
- const innerProfile=[];
- for(let i=0;i<=20;i++){
-  const y=.005+(BOWL_HEIGHT-.005)*i/20;
-  innerProfile.push(new THREE.Vector2(Math.max(.004,bowlRadius(y)-.004),y));
- }
- const inside=mesh(new THREE.LatheGeometry(innerProfile,48),bowlInside,bowlGroup);
- inside.receiveShadow=true;
- const rim=mesh(new THREE.TorusGeometry(.038, .003,8,48),bowlOutside,bowlGroup);
- rim.rotation.x=Math.PI/2;
- rim.position.y=BOWL_HEIGHT;
- const base=mesh(new THREE.CylinderGeometry(.019,.021,.004,32),bowlOutside,bowlGroup);
- base.position.y=.002;
 
- // 内側・外側を薄い凸形状の分割壁で近似する
- // 球体の豆が縁・内壁・外壁に当たるようにする
- const segments=32;
- const layers=6;
- for(let layer=0;layer<layers;layer++){
-  const y0=BOWL_HEIGHT*layer/layers;
-  const y1=BOWL_HEIGHT*(layer+1)/layers;
-  const r0=bowlRadius(y0);
-  const r1=bowlRadius(y1);
-  for(let i=0;i<segments;i++){
-   const a0=i*Math.PI*2/segments;
-   const a1=(i+1)*Math.PI*2/segments;
-   const verts=[
-    new CANNON.Vec3(r0*Math.cos(a0),y0,r0*Math.sin(a0)),
-    new CANNON.Vec3(r0*Math.cos(a1),y0,r0*Math.sin(a1)),
-    new CANNON.Vec3(r1*Math.cos(a0),y1,r1*Math.sin(a0)),
-    new CANNON.Vec3(r1*Math.cos(a1),y1,r1*Math.sin(a1))
-   ];
-   // 四角形を薄い三角柱状の凸形状として構成
-   const mid=(a0+a1)/2;
-   const rmid=(r0+r1)/2;
-   const thick=.004;
-   const v=[
-    ...verts,
-    new CANNON.Vec3((rmid-thick)*Math.cos(a0),y0,(rmid-thick)*Math.sin(a0)),
-    new CANNON.Vec3((rmid-thick)*Math.cos(a1),y0,(rmid-thick)*Math.sin(a1)),
-    new CANNON.Vec3((rmid-thick)*Math.cos(a0),y1,(rmid-thick)*Math.sin(a0)),
-    new CANNON.Vec3((rmid-thick)*Math.cos(a1),y1,(rmid-thick)*Math.sin(a1))
-   ];
-   const faces=[
-    [0,2,3,1],[4,5,7,6],
-    [0,1,5,4],[2,6,7,3],
-    [0,4,6,2],[1,3,7,5]
-   ];
-   try{
-    const shape=new CANNON.ConvexPolyhedron({vertices:v,faces});
-    const body=new CANNON.Body({mass:0,material:bowlMat});
-    body.addShape(shape);
-    body.position.set(0,0,-distance);
-    world.addBody(body);
-    bowlBodies.push(body);
-   }catch(e){}
+ const shell=new THREE.Mesh(
+  new THREE.LatheGeometry(profile,48),cream
+ );
+ shell.castShadow=true;
+ shell.receiveShadow=true;
+ bowl.add(shell);
+
+ const inside=[];
+ for(let i=0;i<=24;i++){
+  const y=.005+.035*i/24;
+  inside.push(new THREE.Vector2(
+   Math.max(.008,radiusAt(y)-.003),y
+  ));
+ }
+
+ const liner=new THREE.Mesh(
+  new THREE.LatheGeometry(inside,48),inner
+ );
+ bowl.add(liner);
+
+ const rim=new THREE.Mesh(
+  new THREE.TorusGeometry(.039,.0024,8,48),cream
+ );
+ rim.rotation.x=Math.PI/2;
+ rim.position.y=.04;
+ bowl.add(rim);
+
+ const foot=new THREE.Mesh(
+  new THREE.CylinderGeometry(.019,.021,.004,32),cream
+ );
+ foot.position.y=.002;
+ bowl.add(foot);
+
+ // お茶碗の壁を分割して衝突判定を作る
+ for(let k=0;k<5;k++){
+  const y0=.04*k/5;
+  const y1=.04*(k+1)/5;
+  const rm=(radiusAt(y0)+radiusAt(y1))/2;
+
+  for(let j=0;j<32;j++){
+   const a=(j+.5)*Math.PI*2/32;
+
+   const shape=new CANNON.Box(
+    new CANNON.Vec3(
+     .004,
+     (y1-y0)/2+.0004,
+     rm*Math.sin(Math.PI/32)+.001
+    )
+   );
+
+   const body=new CANNON.Body({
+    mass:0,material:ceramic
+   });
+   body.addShape(shape);
+   body.position.set(
+    rm*Math.cos(a),
+    (y0+y1)/2,
+    -distance+rm*Math.sin(a)
+   );
+   body.quaternion.setFromEuler(0,-a,0);
+   world.addBody(body);
+   bowlBodies.push(body);
   }
  }
- const bottom=new CANNON.Body({mass:0,material:bowlMat});
- bottom.addShape(new CANNON.Cylinder(.018,.018,.006,24));
- bottom.position.set(0,.003,-distance);
+
+ const bottom=new CANNON.Body({
+  mass:0,material:ceramic
+ });
+ bottom.addShape(
+  new CANNON.Cylinder(.018,.018,.006,24)
+ );
+ bottom.position.set(0,.004,-distance);
  world.addBody(bottom);
  bowlBodies.push(bottom);
 }
 
-// 3粒入りのさや（手前の発射位置）
+// 枝豆のさや
 const pod=new THREE.Group();
 scene.add(pod);
-const podShell=mesh(new THREE.CapsuleGeometry(.018,.065,8,16),green,pod);
-podShell.rotation.z=Math.PI/2;
-podShell.scale.set(1,1,.68);
-podShell.castShadow=true;
-const podSeam=mesh(new THREE.BoxGeometry(.105,.003,.003),seamMat,pod);
-podSeam.position.z=-.013;
-const bulges=[];
-for(let i=0;i<3;i++){
- const bean=mesh(new THREE.SphereGeometry(.016,20,14),lightGreen,pod);
- bean.scale.set(1,.8,.75);
- bean.position.set((i-1)*.032,0,-.014);
- bean.castShadow=true;
- bulges.push(bean);
-}
-const podShadow=mesh(new THREE.CircleGeometry(.07,32),new THREE.MeshBasicMaterial({color:0x1b2a17,transparent:true,opacity:.23}));
-podShadow.rotation.x=-Math.PI/2;
-podShadow.position.set(0,.002,.12);
 
+const podVisual=new THREE.Group();
+pod.add(podVisual);
+
+let podBodyMesh;
+
+function createPodGeometry(){
+ const rings=38;
+ const sides=24;
+ const verts=[];
+ const uv=[];
+ const idx=[];
+
+ for(let i=0;i<=rings;i++){
+  const t=i/rings;
+  const x=(t-.5)*.185;
+  const end=Math.pow(
+   Math.max(.025,Math.sin(Math.PI*t)),.65
+  );
+
+  let bumps=0;
+  for(const c of [.25,.5,.75]){
+   bumps+=Math.exp(
+    -Math.pow((t-c)/.095,2)
+   )*.0065;
+  }
+
+  const r=(.009+bumps)*end;
+
+  for(let j=0;j<=sides;j++){
+   const a=j/sides*Math.PI*2;
+   const ridge=1+.065*Math.cos(a*2);
+
+   verts.push(
+    x,
+    Math.sin(a)*r*1.18*ridge,
+    Math.cos(a)*r*.83
+   );
+   uv.push(t,j/sides);
+
+   if(i<rings&&j<sides){
+    const n=i*(sides+1)+j;
+    idx.push(
+     n,n+sides+1,n+1,
+     n+1,n+sides+1,n+sides+2
+    );
+   }
+  }
+ }
+
+ const g=new THREE.BufferGeometry();
+ g.setAttribute(
+  'position',
+  new THREE.Float32BufferAttribute(verts,3)
+ );
+ g.setAttribute(
+  'uv',
+  new THREE.Float32BufferAttribute(uv,2)
+ );
+ g.setIndex(idx);
+ g.computeVertexNormals();
+ return g;
+}
+
+podBodyMesh=new THREE.Mesh(
+ createPodGeometry(),podMat
+);
+podBodyMesh.castShadow=true;
+podVisual.add(podBodyMesh);
+
+// さやの合わせ目
+for(const s of [-1,1]){
+ const pts=[];
+
+ for(let i=0;i<=44;i++){
+  const t=i/44;
+  const x=(t-.5)*.185;
+  const r=.009*Math.pow(
+   Math.max(.02,Math.sin(Math.PI*t)),.65
+  );
+  pts.push(new THREE.Vector3(
+   x,s*r*.22,-r*.87
+  ));
+ }
+
+ const curve=new THREE.CatmullRomCurve3(pts);
+ const edge=new THREE.Mesh(
+  new THREE.TubeGeometry(curve,64,.0015,5,false),
+  s===1?podLight:podDark
+ );
+ podVisual.add(edge);
+}
+
+// 豆の膨らみ
+const bumps=[];
+
+for(let i=0;i<3;i++){
+ const b=new THREE.Mesh(
+  new THREE.SphereGeometry(.018,24,16),
+  podLight
+ );
+ b.scale.set(1,.85,.55);
+ b.position.set((i-1)*.045,0,-.004);
+ podVisual.add(b);
+ bumps.push(b);
+}
+
+// 茎
+const stem=new THREE.Mesh(
+ new THREE.CylinderGeometry(.002,.003,.02,8),
+ podDark
+);
+stem.rotation.z=Math.PI/2;
+stem.position.x=-.097;
+podVisual.add(stem);
+
+// ゲーム状態
 let yaw=0;
-let elevation=35;
+let pitch=33;
 let round=0;
-let results=[];
-let state="menu";
-let currentBean=null;
-let beanBody=null;
-let shotTime=0;
-let settleTime=0;
-let power=0;
-let pcCharging=false;
-let pcChargeStart=0;
-let previousPinch=null;
-let pinchStarted=0;
-let tracking=false;
-let lastTime=performance.now();
+let records=[];
+let mode='menu';
+let bean=null;
+let body=null;
+let shotStart=0;
+let still=0;
+let pinch=null;
+let charge=0;
+
+const pointers=new Map();
 
 function updatePod(){
- const rad=yaw*Math.PI/180;
- pod.position.set(0,.19,.18);
- pod.rotation.set(-elevation*Math.PI/180,rad,0,"YXZ");
- for(let i=0;i<3;i++)bulges[i].visible=i>=round;
- $("angles").innerHTML=`左右 ${yaw}°<br>仰角 ${elevation}°`;
+ pod.position.set(0,.18,.32);
+ pod.rotation.order='YXZ';
+ pod.rotation.y=yaw*Math.PI/180;
+ pod.rotation.x=-pitch*Math.PI/180;
+
+ bumps.forEach((b,i)=>{
+  b.visible=i>=round;
+ });
+
+ podBodyMesh.scale.y=1-charge*.28;
+ podBodyMesh.scale.z=1-charge*.32;
+
+ bumps.forEach(b=>{
+  b.scale.z=.55*(1-charge*.55);
+ });
 }
-function setAim(dYaw,dEl){
- if(state!=="aim")return;
- yaw=Math.max(-40,Math.min(40,yaw+dYaw));
- elevation=Math.max(8,Math.min(75,elevation+dEl));
- updatePod();
-}
-function showToast(message){
- $("toast").textContent=message;
- $("toast").classList.add("show");
- setTimeout(()=>$("toast").classList.remove("show"),1300);
-}
-function startGame(){
- targetDistance=(30+Math.floor(Math.random()*21))/10;
- round=0;results=[];yaw=0;elevation=35;
- createBowl(targetDistance);
- $("target").textContent=targetDistance.toFixed(1)+" m";
- $("overlay").classList.add("hidden");
- $("startPanel").classList.add("hidden");
- $("resultPanel").classList.add("hidden");
- prepareShot();
-}
-function clearBean(){
- if(currentBean){scene.remove(currentBean);currentBean=null}
- if(beanBody){world.removeBody(beanBody);beanBody=null}
-}
-function prepareShot(){
- clearBean();
- state="aim";tracking=false;power=0;
- $("fill").style.width="0%";
- $("powerText").textContent="2本指で豆をつまんで発射！";
- $("round").textContent=`${round+1} / 3 粒`;
- $("aimControls").classList.remove("hidden");
- $("shootTip").classList.remove("hidden");
- $("hint").classList.remove("hidden");
+
+function resetShot(){
+ if(bean){
+  scene.remove(bean);
+  bean=null;
+ }
+ if(body){
+  world.removeBody(body);
+  body=null;
+ }
+
+ mode='aim';
+ charge=0;
+ pinch=null;
+ still=0;
+ pointers.clear();
+
  pod.visible=true;
  updatePod();
- camera.position.set(0,.85,1.45);
- camera.lookAt(0,.13,-1.4);
+
+ $('count').textContent=
+  '● '.repeat(3-round)+'○ '.repeat(round);
+
+ $('scoreline').textContent=records.length
+  ?records.map(n=>`${n}cm`).join('  /  ')
+  :'';
+
+ camera.position.set(0,.42,1.12);
+ camera.lookAt(0,.14,-1.1);
 }
-function launch(p){
- if(state!=="aim")return;
- power=Math.max(.08,Math.min(1,p));
- state="flight";tracking=true;
+
+function start(){
+ distance=(30+Math.floor(Math.random()*21))/10;
+ round=0;
+ records=[];
+ yaw=0;
+ pitch=33;
+
+ buildBowl();
+ $('screen').classList.add('hidden');
+ resetShot();
+}
+
+function launch(strength){
+ if(mode!=='aim')return;
+
+ mode='flight';
  pod.visible=false;
- $("aimControls").classList.add("hidden");
- $("shootTip").classList.add("hidden");
- $("hint").classList.add("hidden");
- $("fill").style.width=(power*100)+"%";
- $("powerText").textContent="飛んでけーー！！";
 
- currentBean=mesh(new THREE.SphereGeometry(BEAN_RADIUS,20,14),lightGreen);
- currentBean.scale.set(1.1,.85,.9);
- currentBean.castShadow=true;
+ const speed=3.6+
+  Math.max(.06,Math.min(1,strength))*7.6;
 
- beanBody=new CANNON.Body({
+ bean=new THREE.Mesh(
+  new THREE.SphereGeometry(.008,24,16),
+  beanGreen
+ );
+ bean.scale.set(1.12,.9,.94);
+ bean.castShadow=true;
+ scene.add(bean);
+
+ body=new CANNON.Body({
   mass:.0012,
   material:beanMat,
-  shape:new CANNON.Sphere(BEAN_RADIUS),
-  linearDamping:.035,
-  angularDamping:.4,
+  shape:new CANNON.Sphere(.008),
+  linearDamping:.045,
+  angularDamping:.32,
   allowSleep:true,
-  sleepSpeedLimit:.035,
-  sleepTimeLimit:.7
+  sleepSpeedLimit:.04,
+  sleepTimeLimit:.65
  });
- beanBody.position.set(0,.19,.05);
- const h=yaw*Math.PI/180;
- const e=elevation*Math.PI/180;
- // 約3〜5mまで届く発射速度域
- const speed=3.5+power*7.5;
- beanBody.velocity.set(
-  Math.sin(h)*Math.cos(e)*speed,
-  Math.sin(e)*speed,
-  -Math.cos(h)*Math.cos(e)*speed
+
+ body.position.set(0,.18,.2);
+
+ const y=yaw*Math.PI/180;
+ const p=pitch*Math.PI/180;
+
+ body.velocity.set(
+  Math.sin(y)*Math.cos(p)*speed,
+  Math.sin(p)*speed,
+  -Math.cos(y)*Math.cos(p)*speed
  );
- beanBody.angularVelocity.set(8,4,5);
- world.addBody(beanBody);
- shotTime=performance.now();
- settleTime=0;
+
+ body.angularVelocity.set(5,8,3);
+ world.addBody(body);
+
+ shotStart=performance.now();
+ still=0;
 }
-function finishShot(){
- if(state!=="flight"||!beanBody)return;
- state="scored";
- const dx=beanBody.position.x;
- const dz=beanBody.position.z+targetDistance;
- const centerDist=Math.hypot(dx,dz);
- const inside=centerDist<.033 && beanBody.position.y<BOWL_HEIGHT+.004;
- const cm=inside?0:Math.round(centerDist*100);
- results.push(cm);
- showToast(inside?"🫛 IN！ 0cm":`${cm} cm`);
- $("powerText").textContent=inside?"お茶碗に入った！":`記録 ${cm} cm`;
+
+function notice(t){
+ $('notice').textContent=t;
+ $('notice').classList.add('on');
+
+ setTimeout(()=>{
+  $('notice').classList.remove('on');
+ },1250);
+}
+
+function scoreShot(){
+ if(mode!=='flight')return;
+
+ mode='wait';
+
+ const x=body.position.x;
+ const z=body.position.z+distance;
+ const r=Math.hypot(x,z);
+
+ const inside=
+  r<.031&&body.position.y<.045;
+
+ const cm=inside?0:Math.round(r*100);
+ records.push(cm);
+
+ notice(inside?'IN!':cm+' cm');
+
+ $('scoreline').textContent=
+  records.map(n=>`${n}cm`).join('  /  ');
+
  setTimeout(()=>{
   round++;
-  if(round>=3)showResults();
-  else prepareShot();
- },1800);
+  if(round===3)end();
+  else resetShot();
+ },1700);
 }
-function showResults(){
- state="result";
- const sum=results.reduce((a,b)=>a+b,0);
- const rank=sum===0?"伝説の枝豆職人":sum<100?"枝豆の天才":sum<300?"居酒屋の期待の星":sum<700?"見習い枝豆師":"枝豆の才能、捜索中";
- $("score").textContent=sum+" cm";
- $("rank").textContent="🏆 "+rank;
- $("results").innerHTML=results.map((v,i)=>`第${i+1}投： <b>${v} cm</b>`).join("<br>")+`<br>お茶碗まで：${targetDistance.toFixed(1)} m`;
- $("overlay").classList.remove("hidden");
- $("resultPanel").classList.remove("hidden");
-}
-function share(){
- const sum=results.reduce((a,b)=>a+b,0);
- const text=`🫛 IDLE-LAB「枝豆飛ばし」\nお茶碗まで ${targetDistance.toFixed(1)}m\n${results.map((v,i)=>`${i+1}粒目：${v}cm`).join("\n")}\n合計：${sum}cm\n#IDLELAB #枝豆飛ばし`;
- const url="https://twitter.com/intent/tweet?"+new URLSearchParams({text,url:location.href}).toString();
- window.open(url,"_blank","noopener,noreferrer");
-}
-$("startBtn").onclick=startGame;
-$("retryBtn").onclick=startGame;
-$("shareBtn").onclick=share;
-$("homeBtn").onclick=()=>location.href="../../";
-$("left").onclick=()=>setAim(-3,0);
-$("right").onclick=()=>setAim(3,0);
-$("up").onclick=()=>setAim(0,3);
-$("down").onclick=()=>setAim(0,-3);
 
-// タッチ操作：1本指ドラッグで左右、2本指ピンチで発射
+function end(){
+ mode='end';
+
+ $('resultNumber').textContent=
+  records.reduce((a,b)=>a+b,0)+' cm';
+
+ $('results').innerHTML=
+  records.map((v,i)=>
+   `BEAN ${i+1}　${v} cm`
+  ).join('<br>');
+
+ $('intro').classList.add('hidden');
+ $('end').classList.remove('hidden');
+ $('screen').classList.remove('hidden');
+}
+
+$('start').onclick=start;
+$('again').onclick=start;
+
+$('home').onclick=()=>{
+ location.href='../../';
+};
+
+$('share').onclick=()=>{
+ const total=records.reduce((a,b)=>a+b,0);
+
+ const txt=
+  `🫛 枝豆飛ばし｜IDLE-LAB\n`+
+  `${records.join('cm / ')}cm\n`+
+  `合計 ${total}cm\n`+
+  `#IDLELAB #枝豆飛ばし`;
+
+ window.open(
+  'https://twitter.com/intent/tweet?'+
+  new URLSearchParams({
+   text:txt,
+   url:location.href
+  }),
+  '_blank',
+  'noopener,noreferrer'
+ );
+};
+
+// スマホ操作
 const canvas=renderer.domElement;
-const touches=new Map();
-let lastSingle=null;
-canvas.addEventListener("pointerdown",e=>{
- if(state!=="aim")return;
+
+canvas.addEventListener('pointerdown',e=>{
+ if(mode!=='aim')return;
+
  canvas.setPointerCapture(e.pointerId);
- touches.set(e.pointerId,{x:e.clientX,y:e.clientY});
- if(touches.size===1)lastSingle={x:e.clientX,y:e.clientY};
- if(touches.size===2){
-  const pts=[...touches.values()];
-  previousPinch=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
-  pinchStarted=performance.now();
-  lastSingle=null;
+
+ pointers.set(e.pointerId,{
+  x:e.clientX,
+  y:e.clientY
+ });
+
+ if(pointers.size===2){
+  const p=[...pointers.values()];
+
+  pinch={
+   initial:Math.hypot(
+    p[0].x-p[1].x,
+    p[0].y-p[1].y
+   ),
+   travel:0,
+   started:performance.now()
+  };
+
+  charge=0;
  }
 });
-canvas.addEventListener("pointermove",e=>{
- if(!touches.has(e.pointerId)||state!=="aim")return;
- const old=touches.get(e.pointerId);
- touches.set(e.pointerId,{x:e.clientX,y:e.clientY});
- if(touches.size===1&&lastSingle){
-  const dx=e.clientX-old.x;
-  const dy=e.clientY-old.y;
-  setAim(dx*.13,-dy*.12);
- }else if(touches.size===2){
-  const pts=[...touches.values()];
-  const d=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
-  if(previousPinch!==null){
-   const diff=previousPinch-d;
-   if(diff>0){
-    power=Math.min(1,power+diff/95);
-    $("fill").style.width=(power*100)+"%";
-    $("powerText").textContent=`圧縮 ${Math.round(power*100)}%`;
-   }
-   if(power>=.28 && (d<55||power>.92)){
-    const elapsed=Math.max(.06,(performance.now()-pinchStarted)/1000);
-    const squeezeSpeed=Math.min(1,power/elapsed/3);
-    launch(Math.max(.12,Math.min(1,power*.55+squeezeSpeed*.45)));
-   }
+
+canvas.addEventListener('pointermove',e=>{
+ if(mode!=='aim'||!pointers.has(e.pointerId))return;
+
+ const old=pointers.get(e.pointerId);
+
+ pointers.set(e.pointerId,{
+  x:e.clientX,
+  y:e.clientY
+ });
+
+ if(pointers.size===1){
+  // 左右・上下とも1本指ドラッグ
+  yaw=Math.max(
+   -38,
+   Math.min(38,yaw+(e.clientX-old.x)*.14)
+  );
+
+  pitch=Math.max(
+   8,
+   Math.min(73,pitch+(old.y-e.clientY)*.13)
+  );
+
+  updatePod();
+
+ }else if(pointers.size===2&&pinch){
+  const p=[...pointers.values()];
+
+  const d=Math.hypot(
+   p[0].x-p[1].x,
+   p[0].y-p[1].y
+  );
+
+  pinch.travel=Math.max(
+   pinch.travel,
+   pinch.initial-d
+  );
+
+  charge=Math.max(
+   0,
+   Math.min(1,pinch.travel/105)
+  );
+
+  updatePod();
+
+  if(charge>.35&&(d<55||charge>.92)){
+   const elapsed=Math.max(
+    .07,
+    (performance.now()-pinch.started)/1000
+   );
+
+   launch(Math.min(
+    1,
+    charge*.55+(charge/elapsed)*.2
+   ));
   }
-  previousPinch=d;
  }
 });
-function endPointer(e){
- touches.delete(e.pointerId);
- if(touches.size<2)previousPinch=null;
- if(touches.size===0){
-  lastSingle=null;
-  if(state==="aim"&&power>.15){
-   launch(Math.max(.1,power*.7));
+
+function release(e){
+ pointers.delete(e.pointerId);
+
+ if(mode==='aim'&&pinch&&pointers.size<2){
+  if(charge>.16){
+   const elapsed=Math.max(
+    .07,
+    (performance.now()-pinch.started)/1000
+   );
+
+   launch(Math.min(
+    1,
+    charge*.6+(charge/elapsed)*.16
+   ));
   }
-  power=0;
+
+  pinch=null;
+  charge=0;
+  updatePod();
  }
 }
-canvas.addEventListener("pointerup",endPointer);
-canvas.addEventListener("pointercancel",endPointer);
 
-// PC操作：スペース長押し、離して発射
-window.addEventListener("keydown",e=>{
- if(state!=="aim")return;
- if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Space"].includes(e.code))e.preventDefault();
- if(e.code==="ArrowLeft")setAim(-2,0);
- if(e.code==="ArrowRight")setAim(2,0);
- if(e.code==="ArrowUp")setAim(0,2);
- if(e.code==="ArrowDown")setAim(0,-2);
- if(e.code==="Space"&&!pcCharging){
-  pcCharging=true;pcChargeStart=performance.now();
+canvas.addEventListener('pointerup',release);
+canvas.addEventListener('pointercancel',release);
+
+// PC操作
+let keyStart=0;
+
+window.addEventListener('keydown',e=>{
+ if(mode!=='aim')return;
+
+ if([
+  'ArrowLeft','ArrowRight',
+  'ArrowUp','ArrowDown','Space'
+ ].includes(e.code)){
+  e.preventDefault();
+ }
+
+ if(e.code==='ArrowLeft')yaw=Math.max(-38,yaw-2);
+ if(e.code==='ArrowRight')yaw=Math.min(38,yaw+2);
+ if(e.code==='ArrowUp')pitch=Math.min(73,pitch+2);
+ if(e.code==='ArrowDown')pitch=Math.max(8,pitch-2);
+
+ if(e.code==='Space'&&!keyStart){
+  keyStart=performance.now();
+ }
+
+ updatePod();
+});
+
+window.addEventListener('keyup',e=>{
+ if(e.code==='Space'&&keyStart){
+  const elapsed=performance.now()-keyStart;
+  keyStart=0;
+
+  launch(Math.min(
+   1,
+   Math.max(.1,elapsed/1250)
+  ));
  }
 });
-window.addEventListener("keyup",e=>{
- if(e.code==="Space"&&pcCharging){
-  pcCharging=false;
-  launch(Math.min(1,Math.max(.12,(performance.now()-pcChargeStart)/1400)));
- }
-});
 
-const followTarget=new THREE.Vector3();
-const followPosition=new THREE.Vector3();
+// 描画と物理演算
 const clock=new THREE.Clock();
+
 function animate(){
  requestAnimationFrame(animate);
+
  const dt=Math.min(clock.getDelta(),.04);
- if(state==="flight"){
+
+ if(mode==='flight'&&body){
   world.step(1/120,dt,5);
-  if(beanBody&&currentBean){
-   currentBean.position.copy(beanBody.position);
-   currentBean.quaternion.copy(beanBody.quaternion);
-   const pos=beanBody.position;
-   followTarget.set(pos.x,pos.y+.08,pos.z-.25);
-   followPosition.set(pos.x*.85,pos.y+.34,pos.z+.72);
-   camera.position.lerp(followPosition,Math.min(1,dt*3.2));
-   const look=new THREE.Vector3(pos.x,pos.y,pos.z-.15);
-   camera.lookAt(look);
-   const elapsed=(performance.now()-shotTime)/1000;
-   const speed=beanBody.velocity.length();
-   if(speed<.08&&pos.y<.09)settleTime+=dt;
-   else settleTime=0;
-   if(settleTime>1.1||elapsed>15)finishShot();
+
+  bean.position.copy(body.position);
+  bean.quaternion.copy(body.quaternion);
+
+  const p=body.position;
+
+  const follow=new THREE.Vector3(
+   p.x*.9,
+   p.y+.22,
+   p.z+.57
+  );
+
+  camera.position.lerp(
+   follow,
+   Math.min(1,dt*3.8)
+  );
+
+  camera.lookAt(
+   p.x,
+   p.y,
+   p.z-.18
+  );
+
+  const elapsed=
+   (performance.now()-shotStart)/1000;
+
+  if(body.velocity.length()<.07&&p.y<.09){
+   still+=dt;
+  }else{
+   still=0;
   }
- }else if(state==="aim"){
-  const desired=new THREE.Vector3(0,.82,1.4);
-  camera.position.lerp(desired,Math.min(1,dt*5));
-  camera.lookAt(0,.14,-1.6);
+
+  if(still>1.05||elapsed>16){
+   scoreShot();
+  }
+
+ }else if(mode==='aim'){
+  camera.position.lerp(
+   new THREE.Vector3(0,.42,1.12),
+   Math.min(1,dt*4)
+  );
+
+  camera.lookAt(0,.14,-1.1);
  }
+
  renderer.render(scene,camera);
 }
-window.addEventListener("resize",()=>{
+
+window.addEventListener('resize',()=>{
  camera.aspect=innerWidth/innerHeight;
  camera.updateProjectionMatrix();
  renderer.setSize(innerWidth,innerHeight);
 });
+
 updatePod();
-$("loading").remove();
+$('load').remove();
 animate();
 </script>
 </body>
