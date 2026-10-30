@@ -1,0 +1,528 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#111811">
+<title>枝豆飛ばし | IDLE-LAB</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111811;color:#f2f5eb;font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif}
+#game{position:fixed;inset:0;touch-action:none}
+canvas{display:block;touch-action:none}
+#hud{position:fixed;inset:0;pointer-events:none}
+.top{position:absolute;top:0;left:0;right:0;padding:calc(env(safe-area-inset-top) + 14px) 18px 12px;background:linear-gradient(#101810dd,transparent);display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.logo{font-size:12px;font-weight:900;letter-spacing:2px;color:#c6f36b}
+.small{font-size:11px;color:#d2dfc7}
+.big{font-size:22px;font-weight:900}
+.right{text-align:right}
+#hint{position:absolute;left:50%;top:22%;transform:translateX(-50%);background:#101810c9;border:1px solid #a6cb78aa;border-radius:16px;padding:11px 15px;text-align:center;font-size:13px;line-height:1.6;width:max-content;max-width:90vw}
+#bottom{position:absolute;bottom:calc(env(safe-area-inset-bottom) + 16px);left:16px;right:16px;display:flex;flex-direction:column;align-items:center;gap:10px}
+#meter{width:min(340px,90vw);height:11px;border-radius:99px;background:#ffffff30;overflow:hidden}
+#fill{width:0%;height:100%;background:linear-gradient(90deg,#c6f36b,#ffce54,#ff7651);transition:width .04s}
+#powerText{font-size:12px;color:#e4e9d9;text-shadow:0 2px 4px #000}
+#aimControls{pointer-events:auto;display:flex;gap:8px;align-items:center;justify-content:center}
+#aimControls button{border:1px solid #c6f36b77;background:#182318d9;color:#eff6e6;border-radius:12px;padding:10px 13px;font-size:16px;font-weight:800;min-width:45px;touch-action:manipulation}
+#aimControls span{font-size:11px;text-align:center;min-width:76px}
+#shootTip{font-size:12px;background:#111b11c9;border:1px solid #c6f36b66;padding:9px 14px;border-radius:12px;text-align:center}
+button{cursor:pointer;font-family:inherit}
+#overlay{position:fixed;inset:0;background:#0a100ce9;display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}
+.panel{width:min(430px,100%);max-height:90vh;overflow:auto;border:1px solid #c6f36b44;border-radius:25px;background:#19231b;padding:27px 23px;text-align:center;box-shadow:0 25px 80px #0008}
+.kicker{font-size:12px;letter-spacing:3px;color:#c6f36b;font-weight:900}
+h1{font-size:clamp(32px,8vw,48px);margin:12px 0}
+p{line-height:1.8;font-size:14px;color:#cbd5c5}
+.primary{width:100%;background:#c6f36b;color:#17200e;border:0;border-radius:13px;padding:15px;font-size:16px;font-weight:900;margin-top:12px}
+.secondary{width:100%;background:transparent;color:#f2f5eb;border:1px solid #65765e;border-radius:13px;padding:13px;margin-top:9px}
+#results{font-size:14px;line-height:2;text-align:left;margin:15px auto;max-width:280px}
+#score{font-size:48px;font-weight:900;color:#c6f36b}
+.hidden{display:none!important}
+#toast{position:absolute;top:42%;left:50%;transform:translate(-50%,-50%);background:#142014eb;border:1px solid #c6f36b;border-radius:18px;padding:15px 25px;font-weight:900;font-size:24px;white-space:nowrap;opacity:0;transition:opacity .25s}
+#toast.show{opacity:1}
+#loading{position:fixed;inset:0;z-index:30;background:#101810;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;color:#c6f36b;font-weight:800}
+</style>
+</head>
+<body>
+<div id="loading">🫛<br>枝豆を準備しています...</div>
+<div id="game"></div>
+<div id="hud">
+ <div class="top">
+  <div><div class="logo">IDLE-LAB / 001</div><div class="small" id="round">1 / 3 粒</div></div>
+  <div class="right"><div class="small">TARGET DISTANCE</div><div class="big" id="target">4.0 m</div></div>
+ </div>
+ <div id="hint">1本指でドラッグして左右を狙う<br>上下角度は下のボタンで調整</div>
+ <div id="toast"></div>
+ <div id="bottom">
+  <div id="powerText">豆の膨らみを2本指でつまもう！</div>
+  <div id="meter"><div id="fill"></div></div>
+  <div id="aimControls">
+   <button id="left">↶</button>
+   <button id="down">−</button>
+   <span id="angles">左右 0°<br>仰角 35°</span>
+   <button id="up">＋</button>
+   <button id="right">↷</button>
+  </div>
+  <div id="shootTip">🫛 2本指を広げて置き、素早く閉じると発射！</div>
+ </div>
+</div>
+<div id="overlay">
+ <div class="panel" id="startPanel">
+  <div class="kicker">IDLE-LAB / GAME 001</div>
+  <h1>🫛 枝豆飛ばし</h1>
+  <p>枝豆のさやを表裏からギュッ！<br>飛び出した豆を、遠くのお茶碗に入れよう。</p>
+  <p>3粒の停止位置からお茶碗までの距離を合計。<br><b>小さいほど高得点！</b></p>
+  <p>スマホは2本指でつまんで発射。<br>PCではスペースキー長押し→離して発射できるよ。</p>
+  <button class="primary" id="startBtn">ゲームスタート！</button>
+ </div>
+ <div class="panel hidden" id="resultPanel">
+  <div class="kicker">GAME OVER</div>
+  <h1>結果発表</h1>
+  <div id="score">0 cm</div>
+  <div id="rank"></div>
+  <div id="results"></div>
+  <button class="primary" id="retryBtn">もう一度遊ぶ</button>
+  <button class="secondary" id="shareBtn">𝕏 結果をシェア</button>
+  <button class="secondary" id="homeBtn">IDLE-LABに戻る</button>
+ </div>
+</div>
+
+<script type="module">
+import * as THREE from "https://esm.sh/three@0.180.0";
+import * as CANNON from "https://esm.sh/cannon-es@0.20.0";
+
+const $=id=>document.getElementById(id);
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x849a79);
+scene.fog=new THREE.Fog(0x849a79,7,24);
+
+const camera=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,.01,60);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:"high-performance"});
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+$("game").appendChild(renderer.domElement);
+
+scene.add(new THREE.HemisphereLight(0xffffff,0x566444,2.1));
+const sun=new THREE.DirectionalLight(0xfff4d5,2.5);
+sun.position.set(-3,7,3);
+sun.castShadow=true;
+sun.shadow.mapSize.set(1024,1024);
+sun.shadow.camera.left=-8;
+sun.shadow.camera.right=8;
+sun.shadow.camera.top=8;
+sun.shadow.camera.bottom=-8;
+scene.add(sun);
+
+const world=new CANNON.World({gravity:new CANNON.Vec3(0,-9.82,0)});
+world.allowSleep=true;
+world.solver.iterations=12;
+world.broadphase=new CANNON.SAPBroadphase(world);
+const floorMat=new CANNON.Material("floor");
+const beanMat=new CANNON.Material("bean");
+const bowlMat=new CANNON.Material("bowl");
+world.addContactMaterial(new CANNON.ContactMaterial(floorMat,beanMat,{friction:.48,restitution:.38}));
+world.addContactMaterial(new CANNON.ContactMaterial(bowlMat,beanMat,{friction:.32,restitution:.36}));
+
+function mesh(geo,mat,parent=scene){
+ const m=new THREE.Mesh(geo,mat);parent.add(m);return m;
+}
+const green=new THREE.MeshStandardMaterial({color:0x80b34d,roughness:.78});
+const lightGreen=new THREE.MeshStandardMaterial({color:0xa6d56d,roughness:.65});
+const seamMat=new THREE.MeshStandardMaterial({color:0x3d6e2f,roughness:.9});
+const bowlOutside=new THREE.MeshStandardMaterial({color:0xe8e6dc,roughness:.36,side:THREE.DoubleSide});
+const bowlInside=new THREE.MeshStandardMaterial({color:0xc8ded9,roughness:.4,side:THREE.DoubleSide});
+
+const ground=mesh(new THREE.PlaneGeometry(100,100),new THREE.MeshStandardMaterial({color:0x697b58,roughness:1}));
+ground.rotation.x=-Math.PI/2;
+ground.receiveShadow=true;
+const groundBody=new CANNON.Body({mass:0,material:floorMat,shape:new CANNON.Plane()});
+groundBody.quaternion.setFromEuler(-Math.PI/2,0,0);
+world.addBody(groundBody);
+
+// 床の木目・奥行き目印
+const lineMat=new THREE.MeshBasicMaterial({color:0x82926d,transparent:true,opacity:.35});
+for(let i=-10;i<=10;i++){
+ const l=mesh(new THREE.BoxGeometry(.008,.002,22),lineMat);
+ l.position.set(i*.55,.002,-5);
+}
+for(let i=0;i<16;i++){
+ const l=mesh(new THREE.BoxGeometry(12,.002,.008),lineMat);
+ l.position.set(0,.003,-i*.7);
+}
+
+// 単位はメートル。お茶碗：口径8cm、高さ4cm
+const BOWL_RADIUS=.04;
+const BOWL_HEIGHT=.04;
+const BEAN_RADIUS=.008;
+let targetDistance=4;
+let bowlGroup=null;
+let bowlBodies=[];
+
+function bowlRadius(y){
+ const t=Math.max(0,Math.min(1,y/BOWL_HEIGHT));
+ return .018+(.04-.018)*Math.pow(t,.85);
+}
+function createBowl(distance){
+ if(bowlGroup)scene.remove(bowlGroup);
+ for(const b of bowlBodies)world.removeBody(b);
+ bowlBodies=[];
+ bowlGroup=new THREE.Group();
+ bowlGroup.position.z=-distance;
+ scene.add(bowlGroup);
+
+ const profile=[];
+ for(let i=0;i<=20;i++){
+  const y=BOWL_HEIGHT*i/20;
+  profile.push(new THREE.Vector2(bowlRadius(y),y));
+ }
+ const outer=mesh(new THREE.LatheGeometry(profile,48),bowlOutside,bowlGroup);
+ outer.castShadow=true;outer.receiveShadow=true;
+ const innerProfile=[];
+ for(let i=0;i<=20;i++){
+  const y=.005+(BOWL_HEIGHT-.005)*i/20;
+  innerProfile.push(new THREE.Vector2(Math.max(.004,bowlRadius(y)-.004),y));
+ }
+ const inside=mesh(new THREE.LatheGeometry(innerProfile,48),bowlInside,bowlGroup);
+ inside.receiveShadow=true;
+ const rim=mesh(new THREE.TorusGeometry(.038, .003,8,48),bowlOutside,bowlGroup);
+ rim.rotation.x=Math.PI/2;
+ rim.position.y=BOWL_HEIGHT;
+ const base=mesh(new THREE.CylinderGeometry(.019,.021,.004,32),bowlOutside,bowlGroup);
+ base.position.y=.002;
+
+ // 内側・外側を薄い凸形状の分割壁で近似する
+ // 球体の豆が縁・内壁・外壁に当たるようにする
+ const segments=32;
+ const layers=6;
+ for(let layer=0;layer<layers;layer++){
+  const y0=BOWL_HEIGHT*layer/layers;
+  const y1=BOWL_HEIGHT*(layer+1)/layers;
+  const r0=bowlRadius(y0);
+  const r1=bowlRadius(y1);
+  for(let i=0;i<segments;i++){
+   const a0=i*Math.PI*2/segments;
+   const a1=(i+1)*Math.PI*2/segments;
+   const verts=[
+    new CANNON.Vec3(r0*Math.cos(a0),y0,r0*Math.sin(a0)),
+    new CANNON.Vec3(r0*Math.cos(a1),y0,r0*Math.sin(a1)),
+    new CANNON.Vec3(r1*Math.cos(a0),y1,r1*Math.sin(a0)),
+    new CANNON.Vec3(r1*Math.cos(a1),y1,r1*Math.sin(a1))
+   ];
+   // 四角形を薄い三角柱状の凸形状として構成
+   const mid=(a0+a1)/2;
+   const rmid=(r0+r1)/2;
+   const thick=.004;
+   const v=[
+    ...verts,
+    new CANNON.Vec3((rmid-thick)*Math.cos(a0),y0,(rmid-thick)*Math.sin(a0)),
+    new CANNON.Vec3((rmid-thick)*Math.cos(a1),y0,(rmid-thick)*Math.sin(a1)),
+    new CANNON.Vec3((rmid-thick)*Math.cos(a0),y1,(rmid-thick)*Math.sin(a0)),
+    new CANNON.Vec3((rmid-thick)*Math.cos(a1),y1,(rmid-thick)*Math.sin(a1))
+   ];
+   const faces=[
+    [0,2,3,1],[4,5,7,6],
+    [0,1,5,4],[2,6,7,3],
+    [0,4,6,2],[1,3,7,5]
+   ];
+   try{
+    const shape=new CANNON.ConvexPolyhedron({vertices:v,faces});
+    const body=new CANNON.Body({mass:0,material:bowlMat});
+    body.addShape(shape);
+    body.position.set(0,0,-distance);
+    world.addBody(body);
+    bowlBodies.push(body);
+   }catch(e){}
+  }
+ }
+ const bottom=new CANNON.Body({mass:0,material:bowlMat});
+ bottom.addShape(new CANNON.Cylinder(.018,.018,.006,24));
+ bottom.position.set(0,.003,-distance);
+ world.addBody(bottom);
+ bowlBodies.push(bottom);
+}
+
+// 3粒入りのさや（手前の発射位置）
+const pod=new THREE.Group();
+scene.add(pod);
+const podShell=mesh(new THREE.CapsuleGeometry(.018,.065,8,16),green,pod);
+podShell.rotation.z=Math.PI/2;
+podShell.scale.set(1,1,.68);
+podShell.castShadow=true;
+const podSeam=mesh(new THREE.BoxGeometry(.105,.003,.003),seamMat,pod);
+podSeam.position.z=-.013;
+const bulges=[];
+for(let i=0;i<3;i++){
+ const bean=mesh(new THREE.SphereGeometry(.016,20,14),lightGreen,pod);
+ bean.scale.set(1,.8,.75);
+ bean.position.set((i-1)*.032,0,-.014);
+ bean.castShadow=true;
+ bulges.push(bean);
+}
+const podShadow=mesh(new THREE.CircleGeometry(.07,32),new THREE.MeshBasicMaterial({color:0x1b2a17,transparent:true,opacity:.23}));
+podShadow.rotation.x=-Math.PI/2;
+podShadow.position.set(0,.002,.12);
+
+let yaw=0;
+let elevation=35;
+let round=0;
+let results=[];
+let state="menu";
+let currentBean=null;
+let beanBody=null;
+let shotTime=0;
+let settleTime=0;
+let power=0;
+let pcCharging=false;
+let pcChargeStart=0;
+let previousPinch=null;
+let pinchStarted=0;
+let tracking=false;
+let lastTime=performance.now();
+
+function updatePod(){
+ const rad=yaw*Math.PI/180;
+ pod.position.set(0,.19,.18);
+ pod.rotation.set(-elevation*Math.PI/180,rad,0,"YXZ");
+ for(let i=0;i<3;i++)bulges[i].visible=i>=round;
+ $("angles").innerHTML=`左右 ${yaw}°<br>仰角 ${elevation}°`;
+}
+function setAim(dYaw,dEl){
+ if(state!=="aim")return;
+ yaw=Math.max(-40,Math.min(40,yaw+dYaw));
+ elevation=Math.max(8,Math.min(75,elevation+dEl));
+ updatePod();
+}
+function showToast(message){
+ $("toast").textContent=message;
+ $("toast").classList.add("show");
+ setTimeout(()=>$("toast").classList.remove("show"),1300);
+}
+function startGame(){
+ targetDistance=(30+Math.floor(Math.random()*21))/10;
+ round=0;results=[];yaw=0;elevation=35;
+ createBowl(targetDistance);
+ $("target").textContent=targetDistance.toFixed(1)+" m";
+ $("overlay").classList.add("hidden");
+ $("startPanel").classList.add("hidden");
+ $("resultPanel").classList.add("hidden");
+ prepareShot();
+}
+function clearBean(){
+ if(currentBean){scene.remove(currentBean);currentBean=null}
+ if(beanBody){world.removeBody(beanBody);beanBody=null}
+}
+function prepareShot(){
+ clearBean();
+ state="aim";tracking=false;power=0;
+ $("fill").style.width="0%";
+ $("powerText").textContent="2本指で豆をつまんで発射！";
+ $("round").textContent=`${round+1} / 3 粒`;
+ $("aimControls").classList.remove("hidden");
+ $("shootTip").classList.remove("hidden");
+ $("hint").classList.remove("hidden");
+ pod.visible=true;
+ updatePod();
+ camera.position.set(0,.85,1.45);
+ camera.lookAt(0,.13,-1.4);
+}
+function launch(p){
+ if(state!=="aim")return;
+ power=Math.max(.08,Math.min(1,p));
+ state="flight";tracking=true;
+ pod.visible=false;
+ $("aimControls").classList.add("hidden");
+ $("shootTip").classList.add("hidden");
+ $("hint").classList.add("hidden");
+ $("fill").style.width=(power*100)+"%";
+ $("powerText").textContent="飛んでけーー！！";
+
+ currentBean=mesh(new THREE.SphereGeometry(BEAN_RADIUS,20,14),lightGreen);
+ currentBean.scale.set(1.1,.85,.9);
+ currentBean.castShadow=true;
+
+ beanBody=new CANNON.Body({
+  mass:.0012,
+  material:beanMat,
+  shape:new CANNON.Sphere(BEAN_RADIUS),
+  linearDamping:.035,
+  angularDamping:.4,
+  allowSleep:true,
+  sleepSpeedLimit:.035,
+  sleepTimeLimit:.7
+ });
+ beanBody.position.set(0,.19,.05);
+ const h=yaw*Math.PI/180;
+ const e=elevation*Math.PI/180;
+ // 約3〜5mまで届く発射速度域
+ const speed=3.5+power*7.5;
+ beanBody.velocity.set(
+  Math.sin(h)*Math.cos(e)*speed,
+  Math.sin(e)*speed,
+  -Math.cos(h)*Math.cos(e)*speed
+ );
+ beanBody.angularVelocity.set(8,4,5);
+ world.addBody(beanBody);
+ shotTime=performance.now();
+ settleTime=0;
+}
+function finishShot(){
+ if(state!=="flight"||!beanBody)return;
+ state="scored";
+ const dx=beanBody.position.x;
+ const dz=beanBody.position.z+targetDistance;
+ const centerDist=Math.hypot(dx,dz);
+ const inside=centerDist<.033 && beanBody.position.y<BOWL_HEIGHT+.004;
+ const cm=inside?0:Math.round(centerDist*100);
+ results.push(cm);
+ showToast(inside?"🫛 IN！ 0cm":`${cm} cm`);
+ $("powerText").textContent=inside?"お茶碗に入った！":`記録 ${cm} cm`;
+ setTimeout(()=>{
+  round++;
+  if(round>=3)showResults();
+  else prepareShot();
+ },1800);
+}
+function showResults(){
+ state="result";
+ const sum=results.reduce((a,b)=>a+b,0);
+ const rank=sum===0?"伝説の枝豆職人":sum<100?"枝豆の天才":sum<300?"居酒屋の期待の星":sum<700?"見習い枝豆師":"枝豆の才能、捜索中";
+ $("score").textContent=sum+" cm";
+ $("rank").textContent="🏆 "+rank;
+ $("results").innerHTML=results.map((v,i)=>`第${i+1}投： <b>${v} cm</b>`).join("<br>")+`<br>お茶碗まで：${targetDistance.toFixed(1)} m`;
+ $("overlay").classList.remove("hidden");
+ $("resultPanel").classList.remove("hidden");
+}
+function share(){
+ const sum=results.reduce((a,b)=>a+b,0);
+ const text=`🫛 IDLE-LAB「枝豆飛ばし」\nお茶碗まで ${targetDistance.toFixed(1)}m\n${results.map((v,i)=>`${i+1}粒目：${v}cm`).join("\n")}\n合計：${sum}cm\n#IDLELAB #枝豆飛ばし`;
+ const url="https://twitter.com/intent/tweet?"+new URLSearchParams({text,url:location.href}).toString();
+ window.open(url,"_blank","noopener,noreferrer");
+}
+$("startBtn").onclick=startGame;
+$("retryBtn").onclick=startGame;
+$("shareBtn").onclick=share;
+$("homeBtn").onclick=()=>location.href="../../";
+$("left").onclick=()=>setAim(-3,0);
+$("right").onclick=()=>setAim(3,0);
+$("up").onclick=()=>setAim(0,3);
+$("down").onclick=()=>setAim(0,-3);
+
+// タッチ操作：1本指ドラッグで左右、2本指ピンチで発射
+const canvas=renderer.domElement;
+const touches=new Map();
+let lastSingle=null;
+canvas.addEventListener("pointerdown",e=>{
+ if(state!=="aim")return;
+ canvas.setPointerCapture(e.pointerId);
+ touches.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(touches.size===1)lastSingle={x:e.clientX,y:e.clientY};
+ if(touches.size===2){
+  const pts=[...touches.values()];
+  previousPinch=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
+  pinchStarted=performance.now();
+  lastSingle=null;
+ }
+});
+canvas.addEventListener("pointermove",e=>{
+ if(!touches.has(e.pointerId)||state!=="aim")return;
+ const old=touches.get(e.pointerId);
+ touches.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(touches.size===1&&lastSingle){
+  const dx=e.clientX-old.x;
+  const dy=e.clientY-old.y;
+  setAim(dx*.13,-dy*.12);
+ }else if(touches.size===2){
+  const pts=[...touches.values()];
+  const d=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
+  if(previousPinch!==null){
+   const diff=previousPinch-d;
+   if(diff>0){
+    power=Math.min(1,power+diff/95);
+    $("fill").style.width=(power*100)+"%";
+    $("powerText").textContent=`圧縮 ${Math.round(power*100)}%`;
+   }
+   if(power>=.28 && (d<55||power>.92)){
+    const elapsed=Math.max(.06,(performance.now()-pinchStarted)/1000);
+    const squeezeSpeed=Math.min(1,power/elapsed/3);
+    launch(Math.max(.12,Math.min(1,power*.55+squeezeSpeed*.45)));
+   }
+  }
+  previousPinch=d;
+ }
+});
+function endPointer(e){
+ touches.delete(e.pointerId);
+ if(touches.size<2)previousPinch=null;
+ if(touches.size===0){
+  lastSingle=null;
+  if(state==="aim"&&power>.15){
+   launch(Math.max(.1,power*.7));
+  }
+  power=0;
+ }
+}
+canvas.addEventListener("pointerup",endPointer);
+canvas.addEventListener("pointercancel",endPointer);
+
+// PC操作：スペース長押し、離して発射
+window.addEventListener("keydown",e=>{
+ if(state!=="aim")return;
+ if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Space"].includes(e.code))e.preventDefault();
+ if(e.code==="ArrowLeft")setAim(-2,0);
+ if(e.code==="ArrowRight")setAim(2,0);
+ if(e.code==="ArrowUp")setAim(0,2);
+ if(e.code==="ArrowDown")setAim(0,-2);
+ if(e.code==="Space"&&!pcCharging){
+  pcCharging=true;pcChargeStart=performance.now();
+ }
+});
+window.addEventListener("keyup",e=>{
+ if(e.code==="Space"&&pcCharging){
+  pcCharging=false;
+  launch(Math.min(1,Math.max(.12,(performance.now()-pcChargeStart)/1400)));
+ }
+});
+
+const followTarget=new THREE.Vector3();
+const followPosition=new THREE.Vector3();
+const clock=new THREE.Clock();
+function animate(){
+ requestAnimationFrame(animate);
+ const dt=Math.min(clock.getDelta(),.04);
+ if(state==="flight"){
+  world.step(1/120,dt,5);
+  if(beanBody&&currentBean){
+   currentBean.position.copy(beanBody.position);
+   currentBean.quaternion.copy(beanBody.quaternion);
+   const pos=beanBody.position;
+   followTarget.set(pos.x,pos.y+.08,pos.z-.25);
+   followPosition.set(pos.x*.85,pos.y+.34,pos.z+.72);
+   camera.position.lerp(followPosition,Math.min(1,dt*3.2));
+   const look=new THREE.Vector3(pos.x,pos.y,pos.z-.15);
+   camera.lookAt(look);
+   const elapsed=(performance.now()-shotTime)/1000;
+   const speed=beanBody.velocity.length();
+   if(speed<.08&&pos.y<.09)settleTime+=dt;
+   else settleTime=0;
+   if(settleTime>1.1||elapsed>15)finishShot();
+  }
+ }else if(state==="aim"){
+  const desired=new THREE.Vector3(0,.82,1.4);
+  camera.position.lerp(desired,Math.min(1,dt*5));
+  camera.lookAt(0,.14,-1.6);
+ }
+ renderer.render(scene,camera);
+}
+window.addEventListener("resize",()=>{
+ camera.aspect=innerWidth/innerHeight;
+ camera.updateProjectionMatrix();
+ renderer.setSize(innerWidth,innerHeight);
+});
+updatePod();
+$("loading").remove();
+animate();
+</script>
+</body>
+</html>
